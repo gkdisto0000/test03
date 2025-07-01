@@ -55,292 +55,192 @@ function initIntroSectionAnimation() {
     const section = document.querySelector('.sub-banner-section');
     if (!section || !window.gsap) return;
 
-    const title1 = section.querySelector('ul li h2 span:first-child');
-    const title2 = section.querySelector('ul li h2 span:last-child');
-    const desc1 = section.querySelector('ul li p:first-child');
-    const desc2 = section.querySelector('ul li p:last-child');
-    const countUp = section.querySelectorAll('.count-up');
+    // 애니메이션 요소들
+    const elements = {
+        title1: section.querySelector('ul li h2 span:first-child'),
+        title2: section.querySelector('ul li h2 span:last-child'),
+        desc1: section.querySelector('ul li p:first-child'),
+        desc2: section.querySelector('ul li p:last-child'),
+        countUp: section.querySelectorAll('.count-up')
+    };
 
+    // 공통 애니메이션 설정
+    const commonConfig = {
+        from: { opacity: 0, yPercent: 100 },
+        to: { opacity: 1, yPercent: 0, duration: 0.4 },
+        ease: 'cubic-bezier(0.33, 1, 0.68, 1)',
+        scrollTrigger: {
+            trigger: section,
+            start: 'top bottom-=30%',
+            end: 'bottom bottom'
+        }
+    };
+
+    // 애니메이션 시퀀스 생성 함수
+    function createAnimationSequence(tl, isMobile = false) {
+        // 텍스트 애니메이션
+        const textElements = [elements.title1, elements.title2, elements.desc1, elements.desc2];
+        textElements.forEach((el, index) => {
+            tl.fromTo(el, commonConfig.from, {
+                ...commonConfig.to,
+                delay: index * 0.1
+            });
+        });
+
+        // 카운트업 애니메이션
+        if (isMobile) {
+            // 모바일: 개별 애니메이션
+            elements.countUp.forEach((el, index) => {
+                tl.fromTo(el, 
+                    { opacity: 0, yPercent: 50 },
+                    {
+                        opacity: 1,
+                        yPercent: 0,
+                        duration: 0.4,
+                        onStart: () => {
+                            countUpDigitsReverse(`.count-item-${index + 1}`, { duration: 2000 });
+                        }
+                    }
+                );
+            });
+        } else {
+            // 데스크톱: 그룹 애니메이션
+            tl.fromTo(elements.countUp,
+                { opacity: 0, yPercent: 50 },
+                {
+                    opacity: 1,
+                    yPercent: 0,
+                    duration: 0.4,
+                    onComplete: () => {
+                        countUpDigitsReverse('.count-item-1', { duration: 2000 });
+                        countUpDigitsReverse('.count-item-2', { duration: 2000 });
+                    }
+                }
+            );
+        }
+    }
+
+    // 반응형 애니메이션 설정
     ScrollTrigger.matchMedia({
-        '(min-width: 769px)': function () {
-            const tl = gsap.timeline({
-                ease: 'cubic-bezier(0.33, 1, 0.68, 1)',
-                scrollTrigger: {
-                    trigger: section,
-                    start: 'top bottom-=30%',
-                    end: 'bottom bottom',
-                },
-            });
-
-            tl.fromTo(
-                title1,
-                {
-                    opacity: 0,
-                    yPercent: 100,
-                },
-                {
-                    opacity: 1,
-                    yPercent: 0,
-                    duration: 0.4,
-                },
-            )
-                .fromTo(
-                    title2,
-                    {
-                        opacity: 0,
-                        yPercent: 100,
-                    },
-                    {
-                        opacity: 1,
-                        yPercent: 0,
-                        duration: 0.4,
-                    },
-                    '-=0.2',
-                )
-                .fromTo(
-                    desc1,
-                    {
-                        opacity: 0,
-                        yPercent: 100,
-                    },
-                    {
-                        opacity: 1,
-                        yPercent: 0,
-                        duration: 0.4,
-                    },
-                )
-                .fromTo(
-                    desc2,
-                    {
-                        opacity: 0,
-                        yPercent: 100,
-                    },
-                    {
-                        opacity: 1,
-                        yPercent: 0,
-                        duration: 0.4,
-                    },
-                    '-=0.2',
-                )
-                .fromTo(
-                    countUp,
-                    {
-                        opacity: 0,
-                        yPercent: 50,
-                    },
-                    {
-                        opacity: 1,
-                        yPercent: 0,
-                        duration: 0.4,
-                        onComplete: () => {
-                            countUpDigitsReverse('.count-item-1', { duration: 2000 });
-                            countUpDigitsReverse('.count-item-2', { duration: 2000 });
-                        },
-                    },
-                );
+        '(min-width: 769px)': () => {
+            const tl = gsap.timeline({ ...commonConfig });
+            createAnimationSequence(tl, false);
         },
-        '(max-width: 768px)': function () {
-            const tl = gsap.timeline({
-                ease: 'cubic-bezier(0.33, 1, 0.68, 1)',
-                scrollTrigger: {
-                    trigger: section,
-                    start: 'top bottom-=30%',
-                    end: 'bottom bottom',
-                },
-            });
-
-            tl.fromTo(
-                title1,
-                {
-                    opacity: 0,
-                    yPercent: 100,
-                },
-                {
-                    opacity: 1,
-                    yPercent: 0,
-                    duration: 0.4,
-                },
-            )
-                .fromTo(
-                    title2,
-                    {
-                        opacity: 0,
-                        yPercent: 100,
-                    },
-                    {
-                        opacity: 1,
-                        yPercent: 0,
-                        duration: 0.4,
-                    },
-                    '-=0.2',
-                )
-                .fromTo(
-                    desc1,
-                    {
-                        opacity: 0,
-                        yPercent: 100,
-                    },
-                    {
-                        opacity: 1,
-                        yPercent: 0,
-                        duration: 0.4,
-                    },
-                )
-                .fromTo(
-                    desc2,
-                    {
-                        opacity: 0,
-                        yPercent: 100,
-                    },
-                    {
-                        opacity: 1,
-                        yPercent: 0,
-                        duration: 0.4,
-                    },
-                    '-=0.2',
-                )
-                .fromTo(
-                    countUp[0],
-                    {
-                        opacity: 0,
-                        yPercent: 50,
-                    },
-                    {
-                        opacity: 1,
-                        yPercent: 0,
-                        duration: 0.4,
-                        onStart: () => {
-                            countUpDigitsReverse('.count-item-1', { duration: 2000 });
-                        },
-                    },
-                )
-                .fromTo(
-                    countUp[1],
-                    {
-                        opacity: 0,
-                        yPercent: 50,
-                    },
-                    {
-                        opacity: 1,
-                        yPercent: 0,
-                        duration: 0.4,
-                        onStart: () => {
-                            countUpDigitsReverse('.count-item-2', { duration: 2000 });
-                        },
-                    },
-                );
-        },
+        '(max-width: 768px)': () => {
+            const tl = gsap.timeline({ ...commonConfig });
+            createAnimationSequence(tl, true);
+        }
     });
 }
 
-// function initParallaxSectionAnimation() {
-//     const section = document.querySelector('.parallax-section');
-//     if (!section || !window.gsap || !window.ScrollTrigger) return;
+function initParallaxSectionAnimation() {
+    const section = document.querySelector('.parallax-section');
+    if (!section || !window.gsap || !window.ScrollTrigger) return;
 
-//     // 이미지 요소들 선택
-//     const images = section.querySelectorAll('.parallax-images img');
-//     const container = section.querySelector('.parallax-container');
+    // 이미지 요소들 선택
+    const images = section.querySelectorAll('.parallax-images img');
+    const container = section.querySelector('.parallax-container');
 
-//     ScrollTrigger.matchMedia({
-//         '(max-width: 768px)': function () {
-//             gsap.set(images[3], { scaleX: -1 });
-//         },
-//     });
-// // 컨테이너 고정 애니메이션
-//     const tl = gsap.timeline({
-//         scrollTrigger: {
-//             trigger: section,
-//             start: 'top top',
-//             end: 'bottom bottom',
-//             // scrub: 1,
-//             pin: true,
-//             pinSpacing: false,
-//             normalizeScroll: true,
-//         },
-//     });
+    ScrollTrigger.matchMedia({
+        '(max-width: 768px)': function () {
+            gsap.set(images[3], { scaleX: -1 });
+        },
+    });
+// 컨테이너 고정 애니메이션
+    const tl = gsap.timeline({
+        scrollTrigger: {
+            trigger: section,
+            start: 'top top',
+            end: 'bottom bottom',
+            // scrub: 1,
+            pin: true,
+            pinSpacing: false,
+            normalizeScroll: true,
+        },
+    });
 
-//     gsap.fromTo(
-//         '.parallax-titles, .parallax-description',
-//         {
-//             opacity: 0,
-//         },
-//         {
-//             opacity: 1,
-//             duration: 1,
-//             ease: 'power2.out',
-//             scrollTrigger: {
-//                 trigger: section,
-//                 start: 'top center',
-//                 end: 'center center',
-//                 scrub: 1,
-//             },
-//         },
-//     );
+    gsap.fromTo(
+        '.parallax-titles, .parallax-description',
+        {
+            opacity: 0,
+        },
+        {
+            opacity: 1,
+            duration: 1,
+            ease: 'power2.out',
+            scrollTrigger: {
+                trigger: section,
+                start: 'top center',
+                end: 'center center',
+                scrub: 1,
+            },
+        },
+    );
 
-//     // 각 이미지별 패럴렉스 애니메이션
-//     images.forEach((img, index) => {
-//         // 이미지별로 다른 속도 적용
-//         const speeds = [1, 1, 1, 1, 1];
-//         const speed = speeds[index] || 1;
+    // 각 이미지별 패럴렉스 애니메이션
+    images.forEach((img, index) => {
+        // 이미지별로 다른 속도 적용
+        const speeds = [1, 1, 1, 1, 1];
+        const speed = speeds[index] || 1;
 
-//         tl.fromTo(
-//             img,
-//             {
-//                 y: '0', // 시작 위치 (화면 하단)
-//             },
-//             {
-//                 y: `-${200 * speed}vh`, // 속도에 따른 최종 위치 조정
-//                 ease: 'none',
-//                 scrollTrigger: {
-//                     trigger: section,
-//                     start: 'top top',
-//                     end: 'bottom bottom',
-//                     scrub: 1,
-//                     toggleActions: 'play none none reverse',
-//                 },
-//             },
-//         );
-//     });
+        tl.fromTo(
+            img,
+            {
+                y: '0', // 시작 위치 (화면 하단)
+            },
+            {
+                y: `-${200 * speed}vh`, // 속도에 따른 최종 위치 조정
+                ease: 'none',
+                scrollTrigger: {
+                    trigger: section,
+                    start: 'top top',
+                    end: 'bottom bottom',
+                    scrub: 1,
+                    toggleActions: 'play none none reverse',
+                },
+            },
+        );
+    });
 
-//     gsap.fromTo(
-//         images[1],
-//         {
-//             // opacity: 0,
-//             // xPercent: -20,
-//         },
-//         {
-//             opacity: 1,
-//             xPercent: 0,
-//             ease: 'none',
-//             scrollTrigger: {
-//                 trigger: section,
-//                 start: 'top bottom',
-//                 end: 'top center',
-//                 scrub: 1,
-//             },
-//         },
-//     );
-//     gsap.fromTo(
-//         images[4],
-//         {
-//             // opacity: 0,
-//             // xPercent: 20,
-//         },
-//         {
-//             opacity: 1,
-//             xPercent: 0,
-//             ease: 'none',
-//             scrollTrigger: {
-//                 trigger: section,
-//                 start: 'top center',
-//                 end: 'top top',
-//                 scrub: 1,
-//             },
-//         },
-//     );
+    gsap.fromTo(
+        images[1],
+        {
+            // opacity: 0,
+            // xPercent: -20,
+        },
+        {
+            opacity: 1,
+            xPercent: 0,
+            ease: 'none',
+            scrollTrigger: {
+                trigger: section,
+                start: 'top bottom',
+                end: 'top center',
+                scrub: 1,
+            },
+        },
+    );
+    gsap.fromTo(
+        images[4],
+        {
+            // opacity: 0,
+            // xPercent: 20,
+        },
+        {
+            opacity: 1,
+            xPercent: 0,
+            ease: 'none',
+            scrollTrigger: {
+                trigger: section,
+                start: 'top center',
+                end: 'top top',
+                scrub: 1,
+            },
+        },
+    );
 
-//     // return tl;
-// }
+    // return tl;
+}
 
 // 큐브 이미지 경로
 const imagePaths = [
@@ -1008,7 +908,7 @@ window.addEventListener('load', function () {
     }
     initHeroSectionAnimation();
     initIntroSectionAnimation();
-    // initParallaxSectionAnimation();
+    initParallaxSectionAnimation();
     initParallaxDepthSectionAnimation();
     initMobileMenu();
     initUsecaseSectionAnimation();
