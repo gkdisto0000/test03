@@ -158,16 +158,23 @@ function initParallaxSectionAnimation() {
     // 스크롤 방향 감지 함수
     function updateScrollDirection() {
         const currentScrollY = window.scrollY;
-        scrollDirection = currentScrollY > lastScrollY ? 'forward' : 'reverse';
-        lastScrollY = currentScrollY;
+        const deltaY = currentScrollY - lastScrollY;
         
-        // 이미지 컨테이너 전환
-        if (scrollDirection === 'forward') {
-            gsap.to(forwardContainer, { opacity: 1, duration: 0.3 });
-            gsap.to(reverseContainer, { opacity: 0, duration: 0.3 });
-        } else {
-            gsap.to(forwardContainer, { opacity: 0, duration: 0.3 });
-            gsap.to(reverseContainer, { opacity: 1, duration: 0.3 });
+        // 스크롤 변화가 있을 때만 방향 감지
+        if (Math.abs(deltaY) > 5) {
+            scrollDirection = deltaY > 0 ? 'forward' : 'reverse';
+            lastScrollY = currentScrollY;
+            
+            console.log('Scroll direction:', scrollDirection); // 디버깅용
+            
+            // 이미지 컨테이너 전환
+            if (scrollDirection === 'forward') {
+                gsap.to(forwardContainer, { opacity: 1, duration: 0.3, display: 'block' });
+                gsap.to(reverseContainer, { opacity: 0, duration: 0.3, display: 'none' });
+            } else {
+                gsap.to(forwardContainer, { opacity: 0, duration: 0.3, display: 'none' });
+                gsap.to(reverseContainer, { opacity: 1, duration: 0.3, display: 'block' });
+            }
         }
     }
 
@@ -180,9 +187,11 @@ function initParallaxSectionAnimation() {
             pin: true,
             pinSpacing: false,
             normalizeScroll: true,
-            onUpdate: updateScrollDirection,
         },
     });
+
+    // 스크롤 이벤트 리스너 추가
+    window.addEventListener('scroll', updateScrollDirection, { passive: true });
 
     // 텍스트 애니메이션
     gsap.fromTo(
@@ -250,8 +259,11 @@ function initParallaxSectionAnimation() {
     });
 
     // 초기 상태 설정
-    gsap.set(forwardContainer, { opacity: 1 });
-    gsap.set(reverseContainer, { opacity: 0 });
+    gsap.set(forwardContainer, { opacity: 1, display: 'block' });
+    gsap.set(reverseContainer, { opacity: 0, display: 'none' });
+    
+    // 초기 스크롤 위치 설정
+    lastScrollY = window.scrollY;
 }
 
 // 큐브 이미지 경로

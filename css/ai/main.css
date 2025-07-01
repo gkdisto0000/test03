@@ -1899,7 +1899,6 @@ br {
 
     .parallax-section .parallax-images-reverse {
         opacity: 0;
-        display: none;
     }
 
     .parallax-section .parallax-container .parallax-description {
