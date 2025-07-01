@@ -53,139 +53,144 @@ function countUpDigitsReverse(selector, options = {}) {
 
 function initIntroSectionAnimation() {
     const section = document.querySelector('.sub-banner-section');
-    if (!section || !window.gsap || !window.ScrollTrigger) return;
+    if (!section || !window.gsap) return;
 
-    const title1 = section.querySelector('ul li h2 span:first-child');
-    const title2 = section.querySelector('ul li h2 span:last-child');
-    const desc1 = section.querySelector('ul li p:first-child');
-    const desc2 = section.querySelector('ul li p:last-child');
-    const countUp = section.querySelectorAll('.count-up');
+    // 애니메이션 요소들
+    const elements = {
+        title1: section.querySelector('ul li h2 span:first-child'),
+        title2: section.querySelector('ul li h2 span:last-child'),
+        desc1: section.querySelector('ul li p:first-child'),
+        desc2: section.querySelector('ul li p:last-child'),
+        countUp: section.querySelectorAll('.count-up')
+    };
 
-    // 모바일 여부 확인
-    const isMobile = window.innerWidth <= 768;
-
-    // 단일 타임라인으로 통합하여 충돌 방지
-    const tl = gsap.timeline({
+    // 공통 애니메이션 설정
+    const commonConfig = {
+        from: { opacity: 0, yPercent: 100 },
+        to: { opacity: 1, yPercent: 0, duration: 0.4 },
         ease: 'cubic-bezier(0.33, 1, 0.68, 1)',
         scrollTrigger: {
             trigger: section,
             start: 'top bottom-=30%',
-            end: 'bottom bottom',
-            id: 'intro-animation',
-            // 역스크롤링 시 충돌 방지를 위한 설정
-            toggleActions: 'play none none reverse',
-            onEnter: () => {
-                // 애니메이션 시작 시 상태 초기화
-                gsap.set([title1, title2, desc1, desc2], { opacity: 0, yPercent: 100 });
-                gsap.set(countUp, { opacity: 0, yPercent: 50 });
-            },
-            onEnterBack: () => {
-                // 역스크롤링 시 상태 복원
-                gsap.set([title1, title2, desc1, desc2], { opacity: 1, yPercent: 0 });
-                gsap.set(countUp, { opacity: 1, yPercent: 0 });
-            }
+            end: 'bottom bottom'
+        }
+    };
+
+    // 애니메이션 시퀀스 생성 함수
+    function createAnimationSequence(tl, isMobile = false) {
+        // 텍스트 애니메이션
+        const textElements = [elements.title1, elements.title2, elements.desc1, elements.desc2];
+        textElements.forEach((el, index) => {
+            tl.fromTo(el, commonConfig.from, {
+                ...commonConfig.to,
+                delay: index * 0.1
+            });
+        });
+
+        // 카운트업 애니메이션
+        if (isMobile) {
+            // 모바일: 개별 애니메이션
+            elements.countUp.forEach((el, index) => {
+                tl.fromTo(el, 
+                    { opacity: 0, yPercent: 50 },
+                    {
+                        opacity: 1,
+                        yPercent: 0,
+                        duration: 0.4,
+                        onStart: () => {
+                            countUpDigitsReverse(`.count-item-${index + 1}`, { duration: 2000 });
+                        }
+                    }
+                );
+            });
+        } else {
+            // 데스크톱: 그룹 애니메이션
+            tl.fromTo(elements.countUp,
+                { opacity: 0, yPercent: 50 },
+                {
+                    opacity: 1,
+                    yPercent: 0,
+                    duration: 0.4,
+                    onComplete: () => {
+                        countUpDigitsReverse('.count-item-1', { duration: 2000 });
+                        countUpDigitsReverse('.count-item-2', { duration: 2000 });
+                    }
+                }
+            );
+        }
+    }
+
+    // 반응형 애니메이션 설정
+    ScrollTrigger.matchMedia({
+        '(min-width: 769px)': () => {
+            const tl = gsap.timeline({ ...commonConfig });
+            createAnimationSequence(tl, false);
+        },
+        '(max-width: 768px)': () => {
+            const tl = gsap.timeline({ ...commonConfig });
+            createAnimationSequence(tl, true);
         }
     });
-
-    // 텍스트 애니메이션
-    if (title1) {
-        tl.fromTo(title1, { opacity: 0, yPercent: 100 }, { opacity: 1, yPercent: 0, duration: 0.4 });
-    }
-    if (title2) {
-        tl.fromTo(title2, { opacity: 0, yPercent: 100 }, { opacity: 1, yPercent: 0, duration: 0.4 }, '-=0.2');
-    }
-    if (desc1) {
-        tl.fromTo(desc1, { opacity: 0, yPercent: 100 }, { opacity: 1, yPercent: 0, duration: 0.4 });
-    }
-    if (desc2) {
-        tl.fromTo(desc2, { opacity: 0, yPercent: 100 }, { opacity: 1, yPercent: 0, duration: 0.4 }, '-=0.2');
-    }
-
-    // 카운트업 애니메이션
-    if (isMobile) {
-        // 모바일: 개별 애니메이션
-        if (countUp[0]) {
-            tl.fromTo(countUp[0], { opacity: 0, yPercent: 50 }, {
-                opacity: 1,
-                yPercent: 0,
-                duration: 0.4,
-                onStart: () => {
-                    countUpDigitsReverse('.count-item-1', { duration: 2000 });
-                }
-            });
-        }
-        if (countUp[1]) {
-            tl.fromTo(countUp[1], { opacity: 0, yPercent: 50 }, {
-                opacity: 1,
-                yPercent: 0,
-                duration: 0.4,
-                onStart: () => {
-                    countUpDigitsReverse('.count-item-2', { duration: 2000 });
-                }
-            });
-        }
-    } else {
-        // 데스크톱: 그룹 애니메이션
-        if (countUp.length > 0) {
-            tl.fromTo(countUp, { opacity: 0, yPercent: 50 }, {
-                opacity: 1,
-                yPercent: 0,
-                duration: 0.4,
-                onComplete: () => {
-                    countUpDigitsReverse('.count-item-1', { duration: 2000 });
-                    countUpDigitsReverse('.count-item-2', { duration: 2000 });
-                }
-            });
-        }
-    }
-
-    // 리사이즈 시 ScrollTrigger 새로고침
-    const handleResize = () => {
-        const newIsMobile = window.innerWidth <= 768;
-        if (newIsMobile !== isMobile) {
-            // 화면 크기가 변경되면 ScrollTrigger 새로고침
-            ScrollTrigger.refresh();
-        }
-    };
-
-    window.addEventListener('resize', handleResize, { passive: true });
-
-    // cleanup function
-    return () => {
-        window.removeEventListener('resize', handleResize);
-        const trigger = ScrollTrigger.getById('intro-animation');
-        if (trigger) {
-            trigger.kill();
-        }
-    };
 }
 
 function initParallaxSectionAnimation() {
     const section = document.querySelector('.parallax-section');
     if (!section || !window.gsap || !window.ScrollTrigger) return;
 
-    // 이미지 요소들 선택
-    const images = section.querySelectorAll('.parallax-images img');
+    // 이미지 컨테이너들 선택
+    const forwardImages = section.querySelectorAll('.parallax-images img');
+    const reverseImages = section.querySelectorAll('.parallax-images-reverse img');
+    const forwardContainer = section.querySelector('.parallax-images');
+    const reverseContainer = section.querySelector('.parallax-images-reverse');
     const container = section.querySelector('.parallax-container');
 
-    ScrollTrigger.matchMedia({
-        '(max-width: 768px)': function () {
-            gsap.set(images[3], { scaleX: -1 });
-        },
-    });
-// 컨테이너 고정 애니메이션
+    // 스크롤 방향 추적
+    let lastScrollY = 0;
+    let scrollDirection = 'forward'; // 'forward' 또는 'reverse'
+
+    // 모바일에서 특정 이미지 반전 (PC와 동일하게 적용)
+    gsap.set(forwardImages[3], { scaleX: -1 });
+    gsap.set(reverseImages[3], { scaleX: -1 });
+
+    // 스크롤 방향 감지 함수
+    function updateScrollDirection() {
+        const currentScrollY = window.scrollY;
+        const deltaY = currentScrollY - lastScrollY;
+        
+        // 스크롤 변화가 있을 때만 방향 감지
+        if (Math.abs(deltaY) > 5) {
+            scrollDirection = deltaY > 0 ? 'forward' : 'reverse';
+            lastScrollY = currentScrollY;
+            
+            console.log('Scroll direction:', scrollDirection); // 디버깅용
+            
+            // 이미지 컨테이너 전환
+            if (scrollDirection === 'forward') {
+                gsap.to(forwardContainer, { opacity: 1, duration: 0.3, display: 'block' });
+                gsap.to(reverseContainer, { opacity: 0, duration: 0.3, display: 'none' });
+            } else {
+                gsap.to(forwardContainer, { opacity: 0, duration: 0.3, display: 'none' });
+                gsap.to(reverseContainer, { opacity: 1, duration: 0.3, display: 'block' });
+            }
+        }
+    }
+
+    // 컨테이너 고정 애니메이션
     const tl = gsap.timeline({
         scrollTrigger: {
             trigger: section,
             start: 'top top',
             end: 'bottom bottom',
-            // scrub: 1,
             pin: true,
             pinSpacing: false,
             normalizeScroll: true,
         },
     });
 
+    // 스크롤 이벤트 리스너 추가
+    window.addEventListener('scroll', updateScrollDirection, { passive: true });
+
+    // 텍스트 애니메이션
     gsap.fromTo(
         '.parallax-titles, .parallax-description',
         {
@@ -204,69 +209,58 @@ function initParallaxSectionAnimation() {
         },
     );
 
-    // 각 이미지별 패럴렉스 애니메이션
-    images.forEach((img, index) => {
-        // 이미지별로 다른 속도 적용
-        const speeds = [1, 1, 1, 1, 1];
+    // 정방향 이미지 애니메이션
+    forwardImages.forEach((img, index) => {
+        const speeds = [0.8, 1.2, 0.6, 1.0, 0.9];
         const speed = speeds[index] || 1;
 
         tl.fromTo(
             img,
             {
-                y: '0', // 시작 위치 (화면 하단)
+                y: '0vh',
             },
             {
-                y: `-${200 * speed}vh`, // 속도에 따른 최종 위치 조정
+                y: `-${100 * speed}vh`,
                 ease: 'none',
                 scrollTrigger: {
                     trigger: section,
                     start: 'top top',
                     end: 'bottom bottom',
                     scrub: 1,
-                    toggleActions: 'play none none reverse',
                 },
             },
         );
     });
 
-    gsap.fromTo(
-        images[1],
-        {
-            // opacity: 0,
-            // xPercent: -20,
-        },
-        {
-            opacity: 1,
-            xPercent: 0,
-            ease: 'none',
-            scrollTrigger: {
-                trigger: section,
-                start: 'top bottom',
-                end: 'top center',
-                scrub: 1,
-            },
-        },
-    );
-    gsap.fromTo(
-        images[4],
-        {
-            // opacity: 0,
-            // xPercent: 20,
-        },
-        {
-            opacity: 1,
-            xPercent: 0,
-            ease: 'none',
-            scrollTrigger: {
-                trigger: section,
-                start: 'top center',
-                end: 'top top',
-                scrub: 1,
-            },
-        },
-    );
+    // 역방향 이미지 애니메이션
+    reverseImages.forEach((img, index) => {
+        const speeds = [0.8, 1.2, 0.6, 1.0, 0.9];
+        const speed = speeds[index] || 1;
 
-    // return tl;
+        tl.fromTo(
+            img,
+            {
+                y: `-${100 * speed}vh`,
+            },
+            {
+                y: '0vh',
+                ease: 'none',
+                scrollTrigger: {
+                    trigger: section,
+                    start: 'top top',
+                    end: 'bottom bottom',
+                    scrub: 1,
+                },
+            },
+        );
+    });
+
+    // 초기 상태 설정
+    gsap.set(forwardContainer, { opacity: 1, display: 'block' });
+    gsap.set(reverseContainer, { opacity: 0, display: 'none' });
+    
+    // 초기 스크롤 위치 설정
+    lastScrollY = window.scrollY;
 }
 
 // 큐브 이미지 경로
@@ -307,15 +301,35 @@ function isIOSChrome() {
     return isIOSDevice() && navigator.userAgent.includes('CriOS');
 }
 
+function isIOSChromeDevice() {
+    return isIOSDevice() && navigator.userAgent.includes('CriOS');
+}
+
 function disableScroll() {
     const isIOS = isIOSDevice();
+    const isIOSChrome = isIOSChromeDevice();
     
     if (isIOS) {
-        // iOS용 스크롤 제어 - body를 고정하여 스크롤 방지
-        document.body.style.overflow = 'hidden';
-        document.body.style.position = 'fixed';
-        document.body.style.width = '100%';
-        document.body.style.height = '100%';
+        if (isIOSChrome) {
+            // iOS Chrome 특별 처리 - 더 강력한 스크롤 제어
+            document.body.style.overflow = 'hidden';
+            document.body.style.position = 'fixed';
+            document.body.style.width = '100%';
+            document.body.style.height = '100%';
+            document.body.style.top = `-${window.scrollY}px`;
+            
+            // iOS Chrome에서 추가 이벤트 리스너
+            document.addEventListener('touchmove', preventDefault, { passive: false });
+            document.addEventListener('gesturestart', preventDefault, { passive: false });
+            document.addEventListener('gesturechange', preventDefault, { passive: false });
+            document.addEventListener('gestureend', preventDefault, { passive: false });
+        } else {
+            // 일반 iOS 브라우저
+            document.body.style.overflow = 'hidden';
+            document.body.style.position = 'fixed';
+            document.body.style.width = '100%';
+            document.body.style.height = '100%';
+        }
     } else {
         // 데스크톱 및 안드로이드용 이벤트 기반 제어
         document.addEventListener('wheel', preventDefault, { passive: false });
@@ -328,13 +342,35 @@ function disableScroll() {
 
 function enableScroll() {
     const isIOS = isIOSDevice();
+    const isIOSChrome = isIOSChromeDevice();
     
     if (isIOS) {
-        // iOS용 스크롤 복원
-        document.body.style.overflow = '';
-        document.body.style.position = '';
-        document.body.style.width = '';
-        document.body.style.height = '';
+        if (isIOSChrome) {
+            // iOS Chrome 특별 처리 - 스크롤 위치 복원
+            const scrollY = document.body.style.top;
+            document.body.style.overflow = '';
+            document.body.style.position = '';
+            document.body.style.width = '';
+            document.body.style.height = '';
+            document.body.style.top = '';
+            
+            // iOS Chrome 추가 이벤트 리스너 제거
+            document.removeEventListener('touchmove', preventDefault);
+            document.removeEventListener('gesturestart', preventDefault);
+            document.removeEventListener('gesturechange', preventDefault);
+            document.removeEventListener('gestureend', preventDefault);
+            
+            // 스크롤 위치 복원
+            if (scrollY) {
+                window.scrollTo(0, parseInt(scrollY || '0') * -1);
+            }
+        } else {
+            // 일반 iOS 브라우저
+            document.body.style.overflow = '';
+            document.body.style.position = '';
+            document.body.style.width = '';
+            document.body.style.height = '';
+        }
     } else {
         // 데스크톱 및 안드로이드용 이벤트 리스너 제거
         document.removeEventListener('wheel', preventDefault);
@@ -366,6 +402,7 @@ function initParallaxDepthSectionAnimation() {
     let wheelNavInstance; // 휠 네비게이션 인스턴스
     let isUserScrolling = false; // 사용자가 직접 스크롤하고 있는지 추적
     let scrollTimeout;
+    let isInPinMode = false; // pin 모드 상태 추적
 
     // 스크롤 상태 추적
     const trackScrollState = () => {
@@ -378,309 +415,319 @@ function initParallaxDepthSectionAnimation() {
 
     window.addEventListener('scroll', trackScrollState, { passive: true });
 
-    ScrollTrigger.matchMedia({
-        '(min-width: 769px)': function () {
-            let tlComplete = false;
-            const tl = gsap.timeline({
-                ease: 'cubic-bezier(0.33, 1, 0.68, 1)',
-                scrollTrigger: {
-                    trigger: section,
-                    start: 'top center',
-                    end: 'bottom center',
-                    id: 'start-tl',
-                },
-            });
-
-            tl.fromTo(
-                '.cube-item',
-                { opacity: 0, yPercent: -10 },
-                {
-                    opacity: 1,
-                    yPercent: 0,
-                    duration: 0.4,
-                    stagger: 0.2,
-                    onStart: () => {
-                        gsap.set('.cube-wrapper', { xPercent: 0 });
-                    },
-                },
-            )
-                .fromTo('.cube-wrapper', { xPercent: 0 }, { xPercent: 34, duration: 0.3 })
-                .fromTo(
-                    '.list-wrap ul',
-                    { opacity: 0, xPercent: 52, yPercent: -12 },
-                    {
-                        opacity: 1,
-                        xPercent: 0,
-                        yPercent: 0,
-                        duration: 0.3,
-                        onComplete: () => {
-                            tlComplete = true;
-                        },
-                    },
-                    '<',
-                )
-                .fromTo(
-                    '.list-wrap ul li:first-child',
-                    { opacity: 0 },
-                    {
-                        opacity: 1,
-                        duration: 0.3,
-                        onStart: () => {
-                            const img = document.querySelector(
-                                '.cube-wrapper .cube-item.cube-item-6 img',
-                            );
-                            if (img) {
-                                img.src = imagePaths[0].active;
-                            }
-                        },
-                    },
-                    '<',
-                );
-
-            ScrollTrigger.create({
-                trigger: '.component-content',
-                start: 'top top',
-                end: '+=8000', // 충분한 스크롤 공간 확보
-                pin: true,
-                pinSpacing: true,
-                id: 'depth-pin',
-                onEnter: () => {
-                    disableScroll();
-                    const checkComplete = () => {
-                        if (tlComplete) {
-                            if (wheelNavInstance) {
-                                wheelNavInstance.destroy();
-                                wheelNavInstance = null;
-                            }
-                            wheelNavInstance = new WheelNavigation(0);
-                        } else {
-                            requestAnimationFrame(checkComplete);
-                        }
-                    };
-                    requestAnimationFrame(checkComplete);
-                },
-                onLeave: () => {
-                    enableScroll();
-                    setTimeout(() => {
-                        if (wheelNavInstance) {
-                            wheelNavInstance.destroy();
-                            wheelNavInstance = null;
-                        }
-                    }, 400);
-                    tl.progress(1);
-
-                    const imgs = document.querySelectorAll('.cube-wrapper .cube-item img');
-                    const listItems = document.querySelectorAll('.list-wrap ul li');
-                    if (imgs && listItems) {
-                        setTimeout(() => {
-                            imgs.forEach((img) => {
-                                if (img.src.includes('k-model')) {
-                                    img.src = imagePaths[0].src;
-                                } else if (img.src.includes('k-rag')) {
-                                    img.src = imagePaths[1].src;
-                                } else if (img.src.includes('k-agent')) {
-                                    img.src = imagePaths[2].src;
-                                } else if (img.src.includes('k-studio')) {
-                                    img.src = imagePaths[3].src;
-                                } else if (img.src.includes('k-rai')) {
-                                    img.src = imagePaths[4].src;
-                                } else if (img.src.includes('k-infra')) {
-                                    img.src = imagePaths[5].src;
-                                }
-                            });
-
-                            listItems.forEach((item) => {
-                                if (item.classList.contains('active')) {
-                                    item.classList.remove('active');
-                                }
-
-                                gsap.set(item, { opacity: 0 });
-                            });
-                        }, 400);
-                    }
-                },
-                onEnterBack: () => {
-                    disableScroll();
-                    const lastIndex =
-                        document.querySelectorAll('.parallax-depth-section .list-wrap ul li')
-                            .length - 1;
-                    if (wheelNavInstance) {
-                        wheelNavInstance.destroy();
-                        wheelNavInstance = null;
-                    }
-                    wheelNavInstance = new WheelNavigation(lastIndex);
-                },
-                onLeaveBack: () => {
-                    enableScroll();
-                    if (wheelNavInstance) {
-                        wheelNavInstance.destroy();
-                        wheelNavInstance = null;
-                    }
-                    const imgs = document.querySelectorAll('.cube-wrapper .cube-item img');
-                    const listItems = document.querySelectorAll('.list-wrap ul li');
-                    if (imgs && listItems) {
-                        imgs.forEach((img) => {
-                            if (img.src.includes('k-model')) {
-                                img.src = imagePaths[0].active;
-                            } else if (img.src.includes('k-rag')) {
-                                img.src = imagePaths[1].src;
-                            } else if (img.src.includes('k-agent')) {
-                                img.src = imagePaths[2].src;
-                            } else if (img.src.includes('k-studio')) {
-                                img.src = imagePaths[3].src;
-                            } else if (img.src.includes('k-rai')) {
-                                img.src = imagePaths[4].src;
-                            } else if (img.src.includes('k-infra')) {
-                                img.src = imagePaths[5].src;
-                            }
-                        });
-
-                        listItems.forEach((item) => {
-                            if (item.classList.contains('active')) {
-                                item.classList.remove('active');
-                            }
-                            listItems[0].classList.add('active');
-
-                            gsap.set(item, { opacity: 0 });
-                            gsap.set(listItems[0], {
-                                opacity: 1,
-                            });
-                        });
-                    }
-                },
-            });
-
-            const tl2 = gsap.timeline({
-                scrollTrigger: {
-                    trigger: '.component-content',
-                    start: '+=1',
-                    end: '+=1300',
-                    id: 'depth-pin2',
-                    pin: true,
-                    pinSpacing: true,
-                    scrub: 1,
-                    onLeave: () => {
-                        if (wheelNavInstance) {
-                            wheelNavInstance.destroy();
-                            wheelNavInstance = null;
-                        }
-                    },
-                },
-            });
-
-            tl2.fromTo('.list-wrap ul', { opacity: 1 }, { opacity: 0, duration: 0.5 })
-                .fromTo(
-                    '.cube-wrapper',
-                    { xPercent: 34 },
-                    {
-                        xPercent: 0,
-                        duration: 0.5,
-                        ease: 'power2.inOut',
-                    },
-                    '<',
-                )
-                .fromTo('.component-content', { scale: 1 }, { scale: 0.8, ease: 'power2.inOut' })
-                .fromTo(
-                    '.cube-last-text',
-                    { opacity: 0, zIndex: -1 },
-                    {
-                        opacity: 1,
-                        zIndex: 1,
-                        duration: 0.3,
-                        ease: 'power2.inOut',
-                        onComplete: () => {
-                            // 애니메이션 완료 후 AOS 재설정
-                            if (window.AOS) {
-                                setTimeout(() => {
-                                    AOS.refreshHard();
-                                }, 200);
-                            }
-                        },
-                    },
-                    '-=0.2',
-                );
-        },
-        '(max-width: 768px)': function () {
-            // Swiper 인스턴스 생성 (모바일 메뉴용)
-            var pdsSwiper = null;
-            var section = document.querySelector('.parallax-depth-section .component-content');
-            if (!section || !window.Swiper) return;
-
-            var cubeItems = document.querySelectorAll('.cube-wrapper .cube-item');
-            var cubeImgs = Array.from(cubeItems)
-                .map(function (item) {
-                    return item.querySelector('img');
-                })
-                .reverse();
-
-            // Swiper 생성
-            pdsSwiper = new Swiper('.mobile-pds-menu .swiper-container', {
-                slidesPerView: 'auto',
-                spaceBetween: 16,
-                speed: 500,
-                effect: 'slide',
-                on: {
-                    slideChange: function () {
-                        updateCubeActiveImage(this.activeIndex);
-                    },
-                },
-            });
-
-            // cube-item 이미지 active 처리 함수
-            function updateCubeActiveImage(activeIdx) {
-                cubeImgs.forEach(function (img, idx) {
-                    if (imagePaths[idx]) {
-                        img.src = idx === activeIdx ? imagePaths[idx].active : imagePaths[idx].src;
-                    }
-                });
-            }
-
-            // parallax-depth-section 진입 시 첫번째 활성화
-            var st = ScrollTrigger.create({
-                trigger: section,
-                start: 'top center',
-                end: 'bottom center',
-                onEnter: function () {
-                    if (pdsSwiper) {
-                        pdsSwiper.slideTo(0, 0);
-                        updateCubeActiveImage(0);
-                    }
-                },
-                onEnterBack: function () {
-                    if (pdsSwiper) {
-                        pdsSwiper.slideTo(0, 0);
-                        updateCubeActiveImage(0);
-                    }
-                },
-                onLeave: function () {
-                    // 섹션 이탈 시 모든 cube-item 이미지를 기본으로
-                    cubeImgs.forEach(function (img, idx) {
-                        if (imagePaths[idx]) img.src = imagePaths[idx].src;
-                    });
-                },
-                onLeaveBack: function () {
-                    cubeImgs.forEach(function (img, idx) {
-                        if (imagePaths[idx]) img.src = imagePaths[idx].src;
-                    });
-                },
-            });
+    // 공통 애니메이션 설정
+    let tlComplete = false;
+    const tl = gsap.timeline({
+        ease: 'cubic-bezier(0.33, 1, 0.68, 1)',
+        scrollTrigger: {
+            trigger: section,
+            start: 'top center',
+            end: 'bottom center',
+            id: 'start-tl',
         },
     });
 
-    // 리사이즈 시 WheelNavigation만 재생성
+    // 큐브 아이템 애니메이션
+    tl.fromTo(
+        '.cube-item',
+        { opacity: 0, yPercent: -10 },
+        {
+            opacity: 1,
+            yPercent: 0,
+            duration: 0.4,
+            stagger: 0.2,
+            onStart: () => {
+                gsap.set('.cube-wrapper', { xPercent: 0 });
+            },
+        },
+    )
+        .fromTo('.cube-wrapper', { xPercent: 0 }, { xPercent: 34, duration: 0.3 })
+        .fromTo(
+            '.list-wrap ul',
+            { opacity: 0, xPercent: 52, yPercent: -12 },
+            {
+                opacity: 1,
+                xPercent: 0,
+                yPercent: 0,
+                duration: 0.3,
+                onComplete: () => {
+                    tlComplete = true;
+                },
+            },
+            '<',
+        )
+        .fromTo(
+            '.list-wrap ul li:first-child',
+            { opacity: 0 },
+            {
+                opacity: 1,
+                duration: 0.3,
+                onStart: () => {
+                    const img = document.querySelector(
+                        '.cube-wrapper .cube-item.cube-item-6 img',
+                    );
+                    if (img) {
+                        img.src = imagePaths[0].active;
+                    }
+                },
+            },
+            '<',
+        );
+
+    // 메인 핀 애니메이션 - 충돌 방지를 위해 단일 ScrollTrigger로 통합
+    const mainPinTrigger = ScrollTrigger.create({
+        trigger: '.component-content',
+        start: 'top top',
+        end: '+=8000',
+        pin: true,
+        pinSpacing: true,
+        id: 'depth-pin',
+        onEnter: () => {
+            isInPinMode = true;
+            // ScrollTrigger의 pin 기능을 사용하므로 disableScroll 호출하지 않음
+            const checkComplete = () => {
+                if (tlComplete) {
+                    if (wheelNavInstance) {
+                        wheelNavInstance.destroy();
+                        wheelNavInstance = null;
+                    }
+                    wheelNavInstance = new WheelNavigation(0);
+                } else {
+                    requestAnimationFrame(checkComplete);
+                }
+            };
+            requestAnimationFrame(checkComplete);
+        },
+        onLeave: () => {
+            isInPinMode = false;
+            // ScrollTrigger가 자동으로 pin을 해제하므로 enableScroll 호출하지 않음
+            setTimeout(() => {
+                if (wheelNavInstance) {
+                    wheelNavInstance.destroy();
+                    wheelNavInstance = null;
+                }
+            }, 400);
+            tl.progress(1);
+
+            const imgs = document.querySelectorAll('.cube-wrapper .cube-item img');
+            const listItems = document.querySelectorAll('.list-wrap ul li');
+            if (imgs && listItems) {
+                setTimeout(() => {
+                    imgs.forEach((img) => {
+                        if (img.src.includes('k-model')) {
+                            img.src = imagePaths[0].src;
+                        } else if (img.src.includes('k-rag')) {
+                            img.src = imagePaths[1].src;
+                        } else if (img.src.includes('k-agent')) {
+                            img.src = imagePaths[2].src;
+                        } else if (img.src.includes('k-studio')) {
+                            img.src = imagePaths[3].src;
+                        } else if (img.src.includes('k-rai')) {
+                            img.src = imagePaths[4].src;
+                        } else if (img.src.includes('k-infra')) {
+                            img.src = imagePaths[5].src;
+                        }
+                    });
+
+                    listItems.forEach((item) => {
+                        if (item.classList.contains('active')) {
+                            item.classList.remove('active');
+                        }
+                        gsap.set(item, { opacity: 0 });
+                    });
+                }, 400);
+            }
+        },
+        onEnterBack: () => {
+            isInPinMode = true;
+            // 역스크롤링 시 상태 초기화
+            const lastIndex =
+                document.querySelectorAll('.parallax-depth-section .list-wrap ul li')
+                    .length - 1;
+            if (wheelNavInstance) {
+                wheelNavInstance.destroy();
+                wheelNavInstance = null;
+            }
+            wheelNavInstance = new WheelNavigation(lastIndex);
+        },
+        onLeaveBack: () => {
+            isInPinMode = false;
+            // 역스크롤링 시 상태 정리
+            if (wheelNavInstance) {
+                wheelNavInstance.destroy();
+                wheelNavInstance = null;
+            }
+            const imgs = document.querySelectorAll('.cube-wrapper .cube-item img');
+            const listItems = document.querySelectorAll('.list-wrap ul li');
+            if (imgs && listItems) {
+                imgs.forEach((img) => {
+                    if (img.src.includes('k-model')) {
+                        img.src = imagePaths[0].active;
+                    } else if (img.src.includes('k-rag')) {
+                        img.src = imagePaths[1].src;
+                    } else if (img.src.includes('k-agent')) {
+                        img.src = imagePaths[2].src;
+                    } else if (img.src.includes('k-studio')) {
+                        img.src = imagePaths[3].src;
+                    } else if (img.src.includes('k-rai')) {
+                        img.src = imagePaths[4].src;
+                    } else if (img.src.includes('k-infra')) {
+                        img.src = imagePaths[5].src;
+                    }
+                });
+
+                listItems.forEach((item) => {
+                    if (item.classList.contains('active')) {
+                        item.classList.remove('active');
+                    }
+                    listItems[0].classList.add('active');
+
+                    gsap.set(item, { opacity: 0 });
+                    gsap.set(listItems[0], {
+                        opacity: 1,
+                    });
+                });
+            }
+        },
+    });
+
+    // 두 번째 타임라인 (큐브 축소 및 텍스트 표시) - 별도 ScrollTrigger 없이 메인 트리거 내에서 처리
+    const tl2 = gsap.timeline({
+        scrollTrigger: {
+            trigger: '.component-content',
+            start: '+=1',
+            end: '+=1300',
+            id: 'depth-pin2',
+            scrub: 1,
+            onLeave: () => {
+                if (wheelNavInstance) {
+                    wheelNavInstance.destroy();
+                    wheelNavInstance = null;
+                }
+            },
+        },
+    });
+
+    tl2.fromTo('.list-wrap ul', { opacity: 1 }, { opacity: 0, duration: 0.5 })
+        .fromTo(
+            '.cube-wrapper',
+            { xPercent: 34 },
+            {
+                xPercent: 0,
+                duration: 0.5,
+                ease: 'power2.inOut',
+            },
+            '<',
+        )
+        .fromTo('.component-content', { scale: 1 }, { scale: 0.8, ease: 'power2.inOut' })
+        .fromTo(
+            '.cube-last-text',
+            { opacity: 0, zIndex: -1 },
+            {
+                opacity: 1,
+                zIndex: 1,
+                duration: 0.3,
+                ease: 'power2.inOut',
+                onComplete: () => {
+                    // 애니메이션 완료 후 AOS 재설정
+                    if (window.AOS) {
+                        setTimeout(() => {
+                            AOS.refreshHard();
+                        }, 200);
+                    }
+                },
+            },
+            '-=0.2',
+        );
+
+    // 모바일 Swiper 초기화 (Swiper가 있는 경우에만)
+    if (window.Swiper) {
+        const pdsSwiper = new Swiper('.mobile-pds-menu .swiper-container', {
+            slidesPerView: 'auto',
+            spaceBetween: 16,
+            speed: 500,
+            effect: 'slide',
+            on: {
+                slideChange: function () {
+                    const cubeImgs = Array.from(document.querySelectorAll('.cube-wrapper .cube-item'))
+                        .map(item => item.querySelector('img'))
+                        .reverse();
+                    
+                    cubeImgs.forEach((img, idx) => {
+                        if (imagePaths[idx]) {
+                            img.src = idx === this.activeIndex ? imagePaths[idx].active : imagePaths[idx].src;
+                        }
+                    });
+                },
+            },
+        });
+
+        // 모바일 섹션 진입 시 첫번째 활성화
+        ScrollTrigger.create({
+            trigger: section,
+            start: 'top center',
+            end: 'bottom center',
+            onEnter: function () {
+                if (pdsSwiper) {
+                    pdsSwiper.slideTo(0, 0);
+                    const cubeImgs = Array.from(document.querySelectorAll('.cube-wrapper .cube-item'))
+                        .map(item => item.querySelector('img'))
+                        .reverse();
+                    
+                    cubeImgs.forEach((img, idx) => {
+                        if (imagePaths[idx]) {
+                            img.src = idx === 0 ? imagePaths[idx].active : imagePaths[idx].src;
+                        }
+                    });
+                }
+            },
+            onEnterBack: function () {
+                if (pdsSwiper) {
+                    pdsSwiper.slideTo(0, 0);
+                    const cubeImgs = Array.from(document.querySelectorAll('.cube-wrapper .cube-item'))
+                        .map(item => item.querySelector('img'))
+                        .reverse();
+                    
+                    cubeImgs.forEach((img, idx) => {
+                        if (imagePaths[idx]) {
+                            img.src = idx === 0 ? imagePaths[idx].active : imagePaths[idx].src;
+                        }
+                    });
+                }
+            },
+            onLeave: function () {
+                const cubeImgs = Array.from(document.querySelectorAll('.cube-wrapper .cube-item'))
+                    .map(item => item.querySelector('img'))
+                    .reverse();
+                
+                cubeImgs.forEach((img, idx) => {
+                    if (imagePaths[idx]) img.src = imagePaths[idx].src;
+                });
+            },
+            onLeaveBack: function () {
+                const cubeImgs = Array.from(document.querySelectorAll('.cube-wrapper .cube-item'))
+                    .map(item => item.querySelector('img'))
+                    .reverse();
+                
+                cubeImgs.forEach((img, idx) => {
+                    if (imagePaths[idx]) img.src = imagePaths[idx].src;
+                });
+            },
+        });
+    }
+
+    // 리사이즈 시 ScrollTrigger 새로고침
     window.addEventListener('resize', () => {
         ScrollTrigger.refresh();
-        // if (wheelNavInstance) {
-        //     console.log(wheelNavInstance);
-        //     wheelNavInstance.destroy();
-        //     wheelNavInstance = null;
-        // }
     });
 
     // cleanup function
     return () => {
         window.removeEventListener('scroll', trackScrollState);
         clearTimeout(scrollTimeout);
+        if (mainPinTrigger) {
+            mainPinTrigger.kill();
+        }
     };
 }
 
@@ -737,30 +784,47 @@ class WheelNavigation {
         // iOS 디바이스 감지 및 이벤트 리스너 등록
         const isIOSDevice = /iPad|iPhone|iPod/.test(navigator.userAgent) || 
                            (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+        const isIOSChrome = isIOSChromeDevice();
         
         if (isIOSDevice) {
             // iOS에서는 터치 이벤트 사용
             let touchStartY = 0;
             let touchEndY = 0;
+            let touchStartTime = 0;
             
             this.boundHandleTouchStart = (e) => {
                 touchStartY = e.touches[0].clientY;
+                touchStartTime = Date.now();
             };
             
             this.boundHandleTouchEnd = (e) => {
                 touchEndY = e.changedTouches[0].clientY;
+                const touchEndTime = Date.now();
                 const deltaY = touchStartY - touchEndY;
+                const deltaTime = touchEndTime - touchStartTime;
                 
-                if (Math.abs(deltaY) > 30) { // 최소 스와이프 거리
+                // iOS Chrome에서 더 민감한 스와이프 감지
+                const minDistance = isIOSChrome ? 20 : 30;
+                const maxTime = isIOSChrome ? 500 : 300;
+                
+                if (Math.abs(deltaY) > minDistance && deltaTime < maxTime) {
                     const direction = deltaY > 0 ? 1 : -1;
                     this.handleNavigation(direction);
                 }
             };
             
+            // iOS Chrome에서 추가 터치 이벤트
+            if (isIOSChrome) {
+                this.boundHandleTouchMove = (e) => {
+                    e.preventDefault();
+                };
+                window.addEventListener('touchmove', this.boundHandleTouchMove, { passive: false });
+            }
+            
             window.addEventListener('touchstart', this.boundHandleTouchStart, { passive: true });
             window.addEventListener('touchend', this.boundHandleTouchEnd, { passive: true });
         } else {
-            // 데스크톱에서는 휘 이벤트 사용
+            // 데스크톱에서는 휠 이벤트 사용
             window.addEventListener('wheel', this.boundHandleWheel, { passive: false });
         }
     }
@@ -768,10 +832,16 @@ class WheelNavigation {
     destroy() {
         const isIOSDevice = /iPad|iPhone|iPod/.test(navigator.userAgent) || 
                            (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+        const isIOSChrome = isIOSChromeDevice();
         
         if (isIOSDevice) {
             window.removeEventListener('touchstart', this.boundHandleTouchStart);
             window.removeEventListener('touchend', this.boundHandleTouchEnd);
+            
+            // iOS Chrome 추가 이벤트 리스너 제거
+            if (isIOSChrome && this.boundHandleTouchMove) {
+                window.removeEventListener('touchmove', this.boundHandleTouchMove);
+            }
         } else {
             window.removeEventListener('wheel', this.boundHandleWheel);
         }
@@ -779,8 +849,13 @@ class WheelNavigation {
 
     handleNavigation(direction) {
         const currentTime = Date.now();
+        const isIOSChrome = isIOSChromeDevice();
+        
+        // iOS Chrome에서 더 짧은 쿨다운 적용
+        const cooldown = isIOSChrome ? 50 : this.scrollCooldown;
+        
         // 쿨다운 체크
-        if (currentTime - this.lastScrollTime < this.scrollCooldown) {
+        if (currentTime - this.lastScrollTime < cooldown) {
             return;
         }
         if (this.isAnimating) {
@@ -797,7 +872,7 @@ class WheelNavigation {
         const isExitingBottom = direction === 1 && this.currentIndex === this.listItems.length - 1;
 
         if ((isExitingTop || isExitingBottom) && isInPinRange) {
-            // pin 구간 내부일 때만 강제 이동
+            // pin 구간 내부일 때만 강제 이동 - ScrollTrigger와 충돌 방지
             this.isAnimating = true;
             if (window.gsap && window.ScrollToPlugin) {
                 let targetY = isExitingTop ? st.start - 1 : st.end + 1;
@@ -805,20 +880,25 @@ class WheelNavigation {
                 const duration = scrollDistance > 2000 ? 0.8 : 0.5;
                 const ease = scrollDistance > 2000 ? 'power1.inOut' : 'power2.inOut';
 
+                // ScrollTrigger 일시 중지 후 스크롤 실행
+                ScrollTrigger.refresh();
+                
                 gsap.to(window, {
                     scrollTo: targetY,
                     duration,
                     ease,
                     onComplete: () => {
+                        // 스크롤 완료 후 ScrollTrigger 재활성화
                         setTimeout(() => {
+                            ScrollTrigger.refresh();
                             this.isAnimating = false;
-                        }, 200);
+                        }, isIOSChrome ? 100 : 200);
                     },
                 });
             } else {
                 setTimeout(() => {
                     this.isAnimating = false;
-                }, 200);
+                }, isIOSChrome ? 100 : 200);
             }
             return;
         }
@@ -828,7 +908,7 @@ class WheelNavigation {
         if (nextIndex >= 0 && nextIndex < this.listItems.length) {
             setTimeout(() => {
                 this.animateTo(nextIndex);
-            }, 50);
+            }, isIOSChrome ? 25 : 50);
         }
     }
 
@@ -925,23 +1005,39 @@ function initMobileMenu() {
 
 // ===== 페이지 로드 후 애니메이션 실행 =====
 window.addEventListener('load', function () {
+    // GSAP 플러그인 등록
     if (window.gsap && window.ScrollToPlugin) {
         gsap.registerPlugin(ScrollToPlugin);
     }
     if (window.gsap && window.ScrollTrigger) {
+        gsap.registerPlugin(ScrollTrigger);
+        
+        // ScrollTrigger 초기화 지연으로 충돌 방지
         setTimeout(() => {
-            window.ScrollTrigger.refresh();
-        }, 100);
+            ScrollTrigger.refresh();
+        }, 200);
     }
+    
+    // 애니메이션 초기화
     initHeroSectionAnimation();
     initIntroSectionAnimation();
     initParallaxSectionAnimation();
     initParallaxDepthSectionAnimation();
     initMobileMenu();
     initUsecaseSectionAnimation();
+    
+    // 최종 ScrollTrigger 새로고침
+    setTimeout(() => {
+        if (window.ScrollTrigger) {
+            ScrollTrigger.refresh();
+        }
+    }, 500);
 });
 
-// Ensure GSAP ScrollToPlugin is registered
+// Ensure GSAP plugins are registered
 if (window.gsap && window.ScrollToPlugin) {
     gsap.registerPlugin(ScrollToPlugin);
+}
+if (window.gsap && window.ScrollTrigger) {
+    gsap.registerPlugin(ScrollTrigger);
 }
