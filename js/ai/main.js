@@ -282,13 +282,29 @@ function isIOSChrome() {
 
 function disableScroll() {
     const isIOS = isIOSDevice();
+    const isIOSChrome = isIOSChromeDevice();
     
     if (isIOS) {
-        // iOS용 스크롤 제어 - body를 고정하여 스크롤 방지
-        document.body.style.overflow = 'hidden';
-        document.body.style.position = 'fixed';
-        document.body.style.width = '100%';
-        document.body.style.height = '100%';
+        if (isIOSChrome) {
+            // iOS Chrome 특별 처리 - 더 강력한 스크롤 제어
+            document.body.style.overflow = 'hidden';
+            document.body.style.position = 'fixed';
+            document.body.style.width = '100%';
+            document.body.style.height = '100%';
+            document.body.style.top = `-${window.scrollY}px`;
+            
+            // iOS Chrome에서 추가 이벤트 리스너
+            document.addEventListener('touchmove', preventDefault, { passive: false });
+            document.addEventListener('gesturestart', preventDefault, { passive: false });
+            document.addEventListener('gesturechange', preventDefault, { passive: false });
+            document.addEventListener('gestureend', preventDefault, { passive: false });
+        } else {
+            // 일반 iOS 브라우저
+            document.body.style.overflow = 'hidden';
+            document.body.style.position = 'fixed';
+            document.body.style.width = '100%';
+            document.body.style.height = '100%';
+        }
     } else {
         // 데스크톱 및 안드로이드용 이벤트 기반 제어
         document.addEventListener('wheel', preventDefault, { passive: false });
@@ -301,13 +317,35 @@ function disableScroll() {
 
 function enableScroll() {
     const isIOS = isIOSDevice();
+    const isIOSChrome = isIOSChromeDevice();
     
     if (isIOS) {
-        // iOS용 스크롤 복원
-        document.body.style.overflow = '';
-        document.body.style.position = '';
-        document.body.style.width = '';
-        document.body.style.height = '';
+        if (isIOSChrome) {
+            // iOS Chrome 특별 처리 - 스크롤 위치 복원
+            const scrollY = document.body.style.top;
+            document.body.style.overflow = '';
+            document.body.style.position = '';
+            document.body.style.width = '';
+            document.body.style.height = '';
+            document.body.style.top = '';
+            
+            // iOS Chrome 추가 이벤트 리스너 제거
+            document.removeEventListener('touchmove', preventDefault);
+            document.removeEventListener('gesturestart', preventDefault);
+            document.removeEventListener('gesturechange', preventDefault);
+            document.removeEventListener('gestureend', preventDefault);
+            
+            // 스크롤 위치 복원
+            if (scrollY) {
+                window.scrollTo(0, parseInt(scrollY || '0') * -1);
+            }
+        } else {
+            // 일반 iOS 브라우저
+            document.body.style.overflow = '';
+            document.body.style.position = '';
+            document.body.style.width = '';
+            document.body.style.height = '';
+        }
     } else {
         // 데스크톱 및 안드로이드용 이벤트 리스너 제거
         document.removeEventListener('wheel', preventDefault);
