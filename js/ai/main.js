@@ -148,12 +148,9 @@ function initParallaxSectionAnimation() {
     let lastScrollY = 0;
     let scrollDirection = 'forward'; // 'forward' 또는 'reverse'
 
-    ScrollTrigger.matchMedia({
-        '(max-width: 768px)': function () {
-            gsap.set(forwardImages[3], { scaleX: -1 });
-            gsap.set(reverseImages[3], { scaleX: -1 });
-        },
-    });
+    // 모바일에서 특정 이미지 반전 (PC와 동일하게 적용)
+    gsap.set(forwardImages[3], { scaleX: -1 });
+    gsap.set(reverseImages[3], { scaleX: -1 });
 
     // 스크롤 방향 감지 함수
     function updateScrollDirection() {
