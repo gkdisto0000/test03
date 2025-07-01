@@ -210,6 +210,12 @@ br {
     padding: 2.5rem;
 }
 
+.sub-banner-section .sub-banner-inner>ul>li .count-up.smallflex .rolling-number.count-item-1 .countup-digit-container:nth-child(2) {
+    margin-left: -0.95rem;
+}
+
+
+
 .sub-banner-section .sub-banner-inner>ul>li .count-up>span {
     color: var(--white-color);
     font-size: var(--font-size-3xl);
@@ -226,6 +232,10 @@ br {
     font-weight: 600;
     line-height: 1;
     letter-spacing: var(--letter-spacing-md);
+}
+
+.sub-banner-section .sub-banner-inner>ul>li .count-up .rolling-number span {
+    color: var(--white-color);
 }
 
 .sub-banner-section .sub-banner-inner>ul>li .count-up .countup-digit-container {
@@ -252,7 +262,6 @@ br {
     text-align: center;
     width: 7.5rem;
     /* 자릿수 폭 고정 (디자인에 따라 조정) */
-    padding: 0;
 }
 
 /* Info Case Section */
@@ -347,8 +356,6 @@ br {
     align-items: center;
     justify-content: center;
     gap: 2.5rem;
-    max-height: 100vh;
-    min-height: 100vh;
 }
 
 .parallax-titles {
@@ -409,18 +416,6 @@ br {
     height: 100%;
     pointer-events: none;
     z-index: -1;
-}
-
-.parallax-images-reverse {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    pointer-events: none;
-    z-index: -1;
-    opacity: 0;
-    transition: opacity 0.3s ease;
 }
 
 .parallax-images img {
@@ -698,6 +693,10 @@ br {
 }
 
 .mobile-pds-menu {
+    display: none;
+}
+
+.mobile-pds-menu .swiper-slide .btn.main img {
     display: none;
 }
 
@@ -1867,6 +1866,23 @@ br {
         border-radius: 2rem;
     }
 
+    .sub-banner-section .sub-banner-inner>ul>li .count-up.smallflex {
+        padding: 2.4rem 4.8rem 2.4rem 4rem;
+    }
+
+    .sub-banner-section .sub-banner-inner>ul>li .count-up .rolling-number>span {
+        font-weight: 600;
+        font-size: 10rem;
+        line-height: 100%;
+        letter-spacing: -2.0px;
+        text-align: center;
+        vertical-align: middle;
+    }
+
+    .sub-banner-section .sub-banner-inner>ul>li .count-up.smallflex>span {
+        margin-left: 0.8rem;
+    }
+
     .sub-banner-section .sub-banner-inner>ul>li .count-up>span {
         padding: 0;
         font-size: 1.6rem;
@@ -1897,10 +1913,6 @@ br {
         flex-direction: column;
         justify-content: center;
         gap: 2.8rem;
-    }
-
-    .parallax-section .parallax-images-reverse {
-        opacity: 0;
     }
 
     .parallax-section .parallax-container .parallax-description {
@@ -1938,6 +1950,12 @@ br {
     }
 
     /* 개선1 */
+
+    .parallax-section {
+        transform: translateZ(0);
+        will-change: transform;
+    }
+
     .parallax-section .parallax-images img {
         will-change: transform, opacity;
         backface-visibility: hidden;
@@ -1946,6 +1964,9 @@ br {
         -webkit-transform: translate3d(0, 0, 0) scale3d(1, 1, 1);
         image-rendering: auto;
     }
+
+
+    /* 개선1 */
 
     .parallax-section .parallax-images img:nth-child(1) {
         width: 15.8rem;
@@ -2042,6 +2063,8 @@ br {
     .mobile-pds-menu .swiper-slide>div>h3 {
         margin-bottom: 2.4rem;
         position: relative;
+        display: flex;
+        align-items: flex-end;
     }
 
     .mobile-pds-menu .swiper-slide>div>h3>img {
@@ -2067,8 +2090,7 @@ br {
         color: #A5A5A5;
         margin-left: 0.5rem;
         padding-bottom: 0.3rem;
-        position: absolute;
-        bottom: 0px;
+
     }
 
     .mobile-pds-menu .swiper-slide>div>p {
@@ -2120,7 +2142,7 @@ br {
         width: 0.5rem;
         height: 0.7rem;
         margin-left: 0.6rem;
-        margin-bottom: 1px;
+        margin-bottom: 2px;
     }
 
     .cube-wrapper {
