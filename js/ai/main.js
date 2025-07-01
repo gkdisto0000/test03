@@ -608,9 +608,8 @@ function initParallaxDepthSectionAnimation() {
                 end: '+=8000', // 충분한 스크롤 공간 확보
                 pin: true,
                 pinSpacing: true,
-                id: 'depth-pin',
+                id: 'depth-pin-main',
                 onEnter: () => {
-                    disableScroll();
                     const checkComplete = () => {
                         if (tlComplete) {
                             if (wheelNavInstance) {
@@ -625,7 +624,6 @@ function initParallaxDepthSectionAnimation() {
                     requestAnimationFrame(checkComplete);
                 },
                 onLeave: () => {
-                    enableScroll();
                     setTimeout(() => {
                         if (wheelNavInstance) {
                             wheelNavInstance.destroy();
@@ -665,7 +663,6 @@ function initParallaxDepthSectionAnimation() {
                     }
                 },
                 onEnterBack: () => {
-                    disableScroll();
                     const lastIndex =
                         document.querySelectorAll('.parallax-depth-section .list-wrap ul li')
                             .length - 1;
@@ -676,7 +673,6 @@ function initParallaxDepthSectionAnimation() {
                     wheelNavInstance = new WheelNavigation(lastIndex);
                 },
                 onLeaveBack: () => {
-                    enableScroll();
                     if (wheelNavInstance) {
                         wheelNavInstance.destroy();
                         wheelNavInstance = null;
@@ -720,9 +716,9 @@ function initParallaxDepthSectionAnimation() {
                     trigger: '.component-content',
                     start: '+=1',
                     end: '+=1300',
-                    id: 'depth-pin2',
-                    pin: true,
-                    pinSpacing: true,
+                    id: 'depth-pin-secondary',
+                    pin: false, // pin 제거하여 충돌 방지
+                    pinSpacing: false,
                     scrub: 1,
                     onLeave: () => {
                         if (wheelNavInstance) {
@@ -921,7 +917,7 @@ class WheelNavigation {
         this.lastScrollTime = currentTime;
         const direction = e.deltaY > 0 ? 1 : -1;
 
-        const st = ScrollTrigger.getById('depth-pin');
+        const st = ScrollTrigger.getById('depth-pin-main');
         const scrollY = window.scrollY || window.pageYOffset;
         const isInPinRange = st && scrollY >= st.start && scrollY <= st.end;
 
@@ -1057,16 +1053,38 @@ window.addEventListener('load', function () {
         gsap.registerPlugin(ScrollToPlugin);
     }
     if (window.gsap && window.ScrollTrigger) {
+        gsap.registerPlugin(ScrollTrigger);
+        
+        // ScrollTrigger 초기화 전에 기존 인스턴스들 정리
+        ScrollTrigger.getAll().forEach(trigger => {
+            trigger.kill();
+        });
+        
+        // ScrollTrigger 초기화 지연으로 충돌 방지
         setTimeout(() => {
-            window.ScrollTrigger.refresh();
-        }, 100);
+            ScrollTrigger.refresh();
+        }, 200);
     }
+    
+    // 애니메이션 초기화 순서 조정
     initHeroSectionAnimation();
     initIntroSectionAnimation();
     initParallaxSectionAnimation();
-    initParallaxDepthSectionAnimation();
+    
+    // parallax-depth-section은 마지막에 초기화
+    setTimeout(() => {
+        initParallaxDepthSectionAnimation();
+    }, 100);
+    
     initMobileMenu();
     initUsecaseSectionAnimation();
+    
+    // 최종 ScrollTrigger 새로고침
+    setTimeout(() => {
+        if (window.ScrollTrigger) {
+            ScrollTrigger.refresh();
+        }
+    }, 500);
 });
 
 // Ensure GSAP ScrollToPlugin is registered
