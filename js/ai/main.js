@@ -748,30 +748,47 @@ class WheelNavigation {
         // iOS 디바이스 감지 및 이벤트 리스너 등록
         const isIOSDevice = /iPad|iPhone|iPod/.test(navigator.userAgent) || 
                            (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+        const isIOSChrome = isIOSChromeDevice();
         
         if (isIOSDevice) {
             // iOS에서는 터치 이벤트 사용
             let touchStartY = 0;
             let touchEndY = 0;
+            let touchStartTime = 0;
             
             this.boundHandleTouchStart = (e) => {
                 touchStartY = e.touches[0].clientY;
+                touchStartTime = Date.now();
             };
             
             this.boundHandleTouchEnd = (e) => {
                 touchEndY = e.changedTouches[0].clientY;
+                const touchEndTime = Date.now();
                 const deltaY = touchStartY - touchEndY;
+                const deltaTime = touchEndTime - touchStartTime;
                 
-                if (Math.abs(deltaY) > 30) { // 최소 스와이프 거리
+                // iOS Chrome에서 더 민감한 스와이프 감지
+                const minDistance = isIOSChrome ? 20 : 30;
+                const maxTime = isIOSChrome ? 500 : 300;
+                
+                if (Math.abs(deltaY) > minDistance && deltaTime < maxTime) {
                     const direction = deltaY > 0 ? 1 : -1;
                     this.handleNavigation(direction);
                 }
             };
             
+            // iOS Chrome에서 추가 터치 이벤트
+            if (isIOSChrome) {
+                this.boundHandleTouchMove = (e) => {
+                    e.preventDefault();
+                };
+                window.addEventListener('touchmove', this.boundHandleTouchMove, { passive: false });
+            }
+            
             window.addEventListener('touchstart', this.boundHandleTouchStart, { passive: true });
             window.addEventListener('touchend', this.boundHandleTouchEnd, { passive: true });
         } else {
-            // 데스크톱에서는 휘 이벤트 사용
+            // 데스크톱에서는 휠 이벤트 사용
             window.addEventListener('wheel', this.boundHandleWheel, { passive: false });
         }
     }
@@ -779,10 +796,16 @@ class WheelNavigation {
     destroy() {
         const isIOSDevice = /iPad|iPhone|iPod/.test(navigator.userAgent) || 
                            (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+        const isIOSChrome = isIOSChromeDevice();
         
         if (isIOSDevice) {
             window.removeEventListener('touchstart', this.boundHandleTouchStart);
             window.removeEventListener('touchend', this.boundHandleTouchEnd);
+            
+            // iOS Chrome 추가 이벤트 리스너 제거
+            if (isIOSChrome && this.boundHandleTouchMove) {
+                window.removeEventListener('touchmove', this.boundHandleTouchMove);
+            }
         } else {
             window.removeEventListener('wheel', this.boundHandleWheel);
         }
@@ -790,8 +813,13 @@ class WheelNavigation {
 
     handleNavigation(direction) {
         const currentTime = Date.now();
+        const isIOSChrome = isIOSChromeDevice();
+        
+        // iOS Chrome에서 더 짧은 쿨다운 적용
+        const cooldown = isIOSChrome ? 50 : this.scrollCooldown;
+        
         // 쿨다운 체크
-        if (currentTime - this.lastScrollTime < this.scrollCooldown) {
+        if (currentTime - this.lastScrollTime < cooldown) {
             return;
         }
         if (this.isAnimating) {
@@ -823,13 +851,13 @@ class WheelNavigation {
                     onComplete: () => {
                         setTimeout(() => {
                             this.isAnimating = false;
-                        }, 200);
+                        }, isIOSChrome ? 100 : 200);
                     },
                 });
             } else {
                 setTimeout(() => {
                     this.isAnimating = false;
-                }, 200);
+                }, isIOSChrome ? 100 : 200);
             }
             return;
         }
@@ -839,7 +867,7 @@ class WheelNavigation {
         if (nextIndex >= 0 && nextIndex < this.listItems.length) {
             setTimeout(() => {
                 this.animateTo(nextIndex);
-            }, 50);
+            }, isIOSChrome ? 25 : 50);
         }
     }
 
