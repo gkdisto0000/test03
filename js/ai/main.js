@@ -137,28 +137,54 @@ function initParallaxSectionAnimation() {
     const section = document.querySelector('.parallax-section');
     if (!section || !window.gsap || !window.ScrollTrigger) return;
 
-    // 이미지 요소들 선택
-    const images = section.querySelectorAll('.parallax-images img');
+    // 이미지 컨테이너들 선택
+    const forwardImages = section.querySelectorAll('.parallax-images img');
+    const reverseImages = section.querySelectorAll('.parallax-images-reverse img');
+    const forwardContainer = section.querySelector('.parallax-images');
+    const reverseContainer = section.querySelector('.parallax-images-reverse');
     const container = section.querySelector('.parallax-container');
+
+    // 스크롤 방향 추적
+    let lastScrollY = 0;
+    let scrollDirection = 'forward'; // 'forward' 또는 'reverse'
 
     ScrollTrigger.matchMedia({
         '(max-width: 768px)': function () {
-            gsap.set(images[3], { scaleX: -1 });
+            gsap.set(forwardImages[3], { scaleX: -1 });
+            gsap.set(reverseImages[3], { scaleX: -1 });
         },
     });
-// 컨테이너 고정 애니메이션
+
+    // 스크롤 방향 감지 함수
+    function updateScrollDirection() {
+        const currentScrollY = window.scrollY;
+        scrollDirection = currentScrollY > lastScrollY ? 'forward' : 'reverse';
+        lastScrollY = currentScrollY;
+        
+        // 이미지 컨테이너 전환
+        if (scrollDirection === 'forward') {
+            gsap.to(forwardContainer, { opacity: 1, duration: 0.3 });
+            gsap.to(reverseContainer, { opacity: 0, duration: 0.3 });
+        } else {
+            gsap.to(forwardContainer, { opacity: 0, duration: 0.3 });
+            gsap.to(reverseContainer, { opacity: 1, duration: 0.3 });
+        }
+    }
+
+    // 컨테이너 고정 애니메이션
     const tl = gsap.timeline({
         scrollTrigger: {
             trigger: section,
             start: 'top top',
             end: 'bottom bottom',
-            // scrub: 1,
             pin: true,
             pinSpacing: false,
             normalizeScroll: true,
+            onUpdate: updateScrollDirection,
         },
     });
 
+    // 텍스트 애니메이션
     gsap.fromTo(
         '.parallax-titles, .parallax-description',
         {
@@ -177,69 +203,55 @@ function initParallaxSectionAnimation() {
         },
     );
 
-    // 각 이미지별 패럴렉스 애니메이션
-    images.forEach((img, index) => {
-        // 이미지별로 다른 속도 적용
-        const speeds = [1, 1, 1, 1, 1];
+    // 정방향 이미지 애니메이션
+    forwardImages.forEach((img, index) => {
+        const speeds = [0.8, 1.2, 0.6, 1.0, 0.9];
         const speed = speeds[index] || 1;
 
         tl.fromTo(
             img,
             {
-                y: '0', // 시작 위치 (화면 하단)
+                y: '0vh',
             },
             {
-                y: `-${200 * speed}vh`, // 속도에 따른 최종 위치 조정
+                y: `-${100 * speed}vh`,
                 ease: 'none',
                 scrollTrigger: {
                     trigger: section,
                     start: 'top top',
                     end: 'bottom bottom',
                     scrub: 1,
-                    toggleActions: 'play none none reverse',
                 },
             },
         );
     });
 
-    gsap.fromTo(
-        images[1],
-        {
-            // opacity: 0,
-            // xPercent: -20,
-        },
-        {
-            opacity: 1,
-            xPercent: 0,
-            ease: 'none',
-            scrollTrigger: {
-                trigger: section,
-                start: 'top bottom',
-                end: 'top center',
-                scrub: 1,
-            },
-        },
-    );
-    gsap.fromTo(
-        images[4],
-        {
-            // opacity: 0,
-            // xPercent: 20,
-        },
-        {
-            opacity: 1,
-            xPercent: 0,
-            ease: 'none',
-            scrollTrigger: {
-                trigger: section,
-                start: 'top center',
-                end: 'top top',
-                scrub: 1,
-            },
-        },
-    );
+    // 역방향 이미지 애니메이션
+    reverseImages.forEach((img, index) => {
+        const speeds = [0.8, 1.2, 0.6, 1.0, 0.9];
+        const speed = speeds[index] || 1;
 
-    // return tl;
+        tl.fromTo(
+            img,
+            {
+                y: `-${100 * speed}vh`,
+            },
+            {
+                y: '0vh',
+                ease: 'none',
+                scrollTrigger: {
+                    trigger: section,
+                    start: 'top top',
+                    end: 'bottom bottom',
+                    scrub: 1,
+                },
+            },
+        );
+    });
+
+    // 초기 상태 설정
+    gsap.set(forwardContainer, { opacity: 1 });
+    gsap.set(reverseContainer, { opacity: 0 });
 }
 
 // 큐브 이미지 경로
