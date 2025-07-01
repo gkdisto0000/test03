@@ -347,6 +347,8 @@ br {
     align-items: center;
     justify-content: center;
     gap: 2.5rem;
+    max-height: 100vh;
+    min-height: 100vh;
 }
 
 .parallax-titles {
