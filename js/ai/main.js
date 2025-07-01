@@ -301,6 +301,10 @@ function isIOSChrome() {
     return isIOSDevice() && navigator.userAgent.includes('CriOS');
 }
 
+function isIOSChromeDevice() {
+    return isIOSDevice() && navigator.userAgent.includes('CriOS');
+}
+
 function disableScroll() {
     const isIOS = isIOSDevice();
     const isIOSChrome = isIOSChromeDevice();
@@ -398,6 +402,7 @@ function initParallaxDepthSectionAnimation() {
     let wheelNavInstance; // 휠 네비게이션 인스턴스
     let isUserScrolling = false; // 사용자가 직접 스크롤하고 있는지 추적
     let scrollTimeout;
+    let isInPinMode = false; // pin 모드 상태 추적
 
     // 스크롤 상태 추적
     const trackScrollState = () => {
@@ -469,8 +474,8 @@ function initParallaxDepthSectionAnimation() {
             '<',
         );
 
-    // 메인 핀 애니메이션
-    ScrollTrigger.create({
+    // 메인 핀 애니메이션 - 충돌 방지를 위해 단일 ScrollTrigger로 통합
+    const mainPinTrigger = ScrollTrigger.create({
         trigger: '.component-content',
         start: 'top top',
         end: '+=8000',
@@ -478,7 +483,8 @@ function initParallaxDepthSectionAnimation() {
         pinSpacing: true,
         id: 'depth-pin',
         onEnter: () => {
-            disableScroll();
+            isInPinMode = true;
+            // ScrollTrigger의 pin 기능을 사용하므로 disableScroll 호출하지 않음
             const checkComplete = () => {
                 if (tlComplete) {
                     if (wheelNavInstance) {
@@ -493,7 +499,8 @@ function initParallaxDepthSectionAnimation() {
             requestAnimationFrame(checkComplete);
         },
         onLeave: () => {
-            enableScroll();
+            isInPinMode = false;
+            // ScrollTrigger가 자동으로 pin을 해제하므로 enableScroll 호출하지 않음
             setTimeout(() => {
                 if (wheelNavInstance) {
                     wheelNavInstance.destroy();
@@ -532,7 +539,8 @@ function initParallaxDepthSectionAnimation() {
             }
         },
         onEnterBack: () => {
-            disableScroll();
+            isInPinMode = true;
+            // 역스크롤링 시 상태 초기화
             const lastIndex =
                 document.querySelectorAll('.parallax-depth-section .list-wrap ul li')
                     .length - 1;
@@ -543,7 +551,8 @@ function initParallaxDepthSectionAnimation() {
             wheelNavInstance = new WheelNavigation(lastIndex);
         },
         onLeaveBack: () => {
-            enableScroll();
+            isInPinMode = false;
+            // 역스크롤링 시 상태 정리
             if (wheelNavInstance) {
                 wheelNavInstance.destroy();
                 wheelNavInstance = null;
@@ -582,15 +591,13 @@ function initParallaxDepthSectionAnimation() {
         },
     });
 
-    // 두 번째 타임라인 (큐브 축소 및 텍스트 표시)
+    // 두 번째 타임라인 (큐브 축소 및 텍스트 표시) - 별도 ScrollTrigger 없이 메인 트리거 내에서 처리
     const tl2 = gsap.timeline({
         scrollTrigger: {
             trigger: '.component-content',
             start: '+=1',
             end: '+=1300',
             id: 'depth-pin2',
-            pin: true,
-            pinSpacing: true,
             scrub: 1,
             onLeave: () => {
                 if (wheelNavInstance) {
@@ -718,6 +725,9 @@ function initParallaxDepthSectionAnimation() {
     return () => {
         window.removeEventListener('scroll', trackScrollState);
         clearTimeout(scrollTimeout);
+        if (mainPinTrigger) {
+            mainPinTrigger.kill();
+        }
     };
 }
 
@@ -862,7 +872,7 @@ class WheelNavigation {
         const isExitingBottom = direction === 1 && this.currentIndex === this.listItems.length - 1;
 
         if ((isExitingTop || isExitingBottom) && isInPinRange) {
-            // pin 구간 내부일 때만 강제 이동
+            // pin 구간 내부일 때만 강제 이동 - ScrollTrigger와 충돌 방지
             this.isAnimating = true;
             if (window.gsap && window.ScrollToPlugin) {
                 let targetY = isExitingTop ? st.start - 1 : st.end + 1;
@@ -870,12 +880,17 @@ class WheelNavigation {
                 const duration = scrollDistance > 2000 ? 0.8 : 0.5;
                 const ease = scrollDistance > 2000 ? 'power1.inOut' : 'power2.inOut';
 
+                // ScrollTrigger 일시 중지 후 스크롤 실행
+                ScrollTrigger.refresh();
+                
                 gsap.to(window, {
                     scrollTo: targetY,
                     duration,
                     ease,
                     onComplete: () => {
+                        // 스크롤 완료 후 ScrollTrigger 재활성화
                         setTimeout(() => {
+                            ScrollTrigger.refresh();
                             this.isAnimating = false;
                         }, isIOSChrome ? 100 : 200);
                     },
@@ -990,23 +1005,39 @@ function initMobileMenu() {
 
 // ===== 페이지 로드 후 애니메이션 실행 =====
 window.addEventListener('load', function () {
+    // GSAP 플러그인 등록
     if (window.gsap && window.ScrollToPlugin) {
         gsap.registerPlugin(ScrollToPlugin);
     }
     if (window.gsap && window.ScrollTrigger) {
+        gsap.registerPlugin(ScrollTrigger);
+        
+        // ScrollTrigger 초기화 지연으로 충돌 방지
         setTimeout(() => {
-            window.ScrollTrigger.refresh();
-        }, 100);
+            ScrollTrigger.refresh();
+        }, 200);
     }
+    
+    // 애니메이션 초기화
     initHeroSectionAnimation();
     initIntroSectionAnimation();
     initParallaxSectionAnimation();
     initParallaxDepthSectionAnimation();
     initMobileMenu();
     initUsecaseSectionAnimation();
+    
+    // 최종 ScrollTrigger 새로고침
+    setTimeout(() => {
+        if (window.ScrollTrigger) {
+            ScrollTrigger.refresh();
+        }
+    }, 500);
 });
 
-// Ensure GSAP ScrollToPlugin is registered
+// Ensure GSAP plugins are registered
 if (window.gsap && window.ScrollToPlugin) {
     gsap.registerPlugin(ScrollToPlugin);
+}
+if (window.gsap && window.ScrollTrigger) {
+    gsap.registerPlugin(ScrollTrigger);
 }
