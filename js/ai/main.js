@@ -410,303 +410,308 @@ function initParallaxDepthSectionAnimation() {
 
     window.addEventListener('scroll', trackScrollState, { passive: true });
 
-    ScrollTrigger.matchMedia({
-        '(min-width: 769px)': function () {
-            let tlComplete = false;
-            const tl = gsap.timeline({
-                ease: 'cubic-bezier(0.33, 1, 0.68, 1)',
-                scrollTrigger: {
-                    trigger: section,
-                    start: 'top center',
-                    end: 'bottom center',
-                    id: 'start-tl',
-                },
-            });
-
-            tl.fromTo(
-                '.cube-item',
-                { opacity: 0, yPercent: -10 },
-                {
-                    opacity: 1,
-                    yPercent: 0,
-                    duration: 0.4,
-                    stagger: 0.2,
-                    onStart: () => {
-                        gsap.set('.cube-wrapper', { xPercent: 0 });
-                    },
-                },
-            )
-                .fromTo('.cube-wrapper', { xPercent: 0 }, { xPercent: 34, duration: 0.3 })
-                .fromTo(
-                    '.list-wrap ul',
-                    { opacity: 0, xPercent: 52, yPercent: -12 },
-                    {
-                        opacity: 1,
-                        xPercent: 0,
-                        yPercent: 0,
-                        duration: 0.3,
-                        onComplete: () => {
-                            tlComplete = true;
-                        },
-                    },
-                    '<',
-                )
-                .fromTo(
-                    '.list-wrap ul li:first-child',
-                    { opacity: 0 },
-                    {
-                        opacity: 1,
-                        duration: 0.3,
-                        onStart: () => {
-                            const img = document.querySelector(
-                                '.cube-wrapper .cube-item.cube-item-6 img',
-                            );
-                            if (img) {
-                                img.src = imagePaths[0].active;
-                            }
-                        },
-                    },
-                    '<',
-                );
-
-            ScrollTrigger.create({
-                trigger: '.component-content',
-                start: 'top top',
-                end: '+=8000', // 충분한 스크롤 공간 확보
-                pin: true,
-                pinSpacing: true,
-                id: 'depth-pin',
-                onEnter: () => {
-                    disableScroll();
-                    const checkComplete = () => {
-                        if (tlComplete) {
-                            if (wheelNavInstance) {
-                                wheelNavInstance.destroy();
-                                wheelNavInstance = null;
-                            }
-                            wheelNavInstance = new WheelNavigation(0);
-                        } else {
-                            requestAnimationFrame(checkComplete);
-                        }
-                    };
-                    requestAnimationFrame(checkComplete);
-                },
-                onLeave: () => {
-                    enableScroll();
-                    setTimeout(() => {
-                        if (wheelNavInstance) {
-                            wheelNavInstance.destroy();
-                            wheelNavInstance = null;
-                        }
-                    }, 400);
-                    tl.progress(1);
-
-                    const imgs = document.querySelectorAll('.cube-wrapper .cube-item img');
-                    const listItems = document.querySelectorAll('.list-wrap ul li');
-                    if (imgs && listItems) {
-                        setTimeout(() => {
-                            imgs.forEach((img) => {
-                                if (img.src.includes('k-model')) {
-                                    img.src = imagePaths[0].src;
-                                } else if (img.src.includes('k-rag')) {
-                                    img.src = imagePaths[1].src;
-                                } else if (img.src.includes('k-agent')) {
-                                    img.src = imagePaths[2].src;
-                                } else if (img.src.includes('k-studio')) {
-                                    img.src = imagePaths[3].src;
-                                } else if (img.src.includes('k-rai')) {
-                                    img.src = imagePaths[4].src;
-                                } else if (img.src.includes('k-infra')) {
-                                    img.src = imagePaths[5].src;
-                                }
-                            });
-
-                            listItems.forEach((item) => {
-                                if (item.classList.contains('active')) {
-                                    item.classList.remove('active');
-                                }
-
-                                gsap.set(item, { opacity: 0 });
-                            });
-                        }, 400);
-                    }
-                },
-                onEnterBack: () => {
-                    disableScroll();
-                    const lastIndex =
-                        document.querySelectorAll('.parallax-depth-section .list-wrap ul li')
-                            .length - 1;
-                    if (wheelNavInstance) {
-                        wheelNavInstance.destroy();
-                        wheelNavInstance = null;
-                    }
-                    wheelNavInstance = new WheelNavigation(lastIndex);
-                },
-                onLeaveBack: () => {
-                    enableScroll();
-                    if (wheelNavInstance) {
-                        wheelNavInstance.destroy();
-                        wheelNavInstance = null;
-                    }
-                    const imgs = document.querySelectorAll('.cube-wrapper .cube-item img');
-                    const listItems = document.querySelectorAll('.list-wrap ul li');
-                    if (imgs && listItems) {
-                        imgs.forEach((img) => {
-                            if (img.src.includes('k-model')) {
-                                img.src = imagePaths[0].active;
-                            } else if (img.src.includes('k-rag')) {
-                                img.src = imagePaths[1].src;
-                            } else if (img.src.includes('k-agent')) {
-                                img.src = imagePaths[2].src;
-                            } else if (img.src.includes('k-studio')) {
-                                img.src = imagePaths[3].src;
-                            } else if (img.src.includes('k-rai')) {
-                                img.src = imagePaths[4].src;
-                            } else if (img.src.includes('k-infra')) {
-                                img.src = imagePaths[5].src;
-                            }
-                        });
-
-                        listItems.forEach((item) => {
-                            if (item.classList.contains('active')) {
-                                item.classList.remove('active');
-                            }
-                            listItems[0].classList.add('active');
-
-                            gsap.set(item, { opacity: 0 });
-                            gsap.set(listItems[0], {
-                                opacity: 1,
-                            });
-                        });
-                    }
-                },
-            });
-
-            const tl2 = gsap.timeline({
-                scrollTrigger: {
-                    trigger: '.component-content',
-                    start: '+=1',
-                    end: '+=1300',
-                    id: 'depth-pin2',
-                    pin: true,
-                    pinSpacing: true,
-                    scrub: 1,
-                    onLeave: () => {
-                        if (wheelNavInstance) {
-                            wheelNavInstance.destroy();
-                            wheelNavInstance = null;
-                        }
-                    },
-                },
-            });
-
-            tl2.fromTo('.list-wrap ul', { opacity: 1 }, { opacity: 0, duration: 0.5 })
-                .fromTo(
-                    '.cube-wrapper',
-                    { xPercent: 34 },
-                    {
-                        xPercent: 0,
-                        duration: 0.5,
-                        ease: 'power2.inOut',
-                    },
-                    '<',
-                )
-                .fromTo('.component-content', { scale: 1 }, { scale: 0.8, ease: 'power2.inOut' })
-                .fromTo(
-                    '.cube-last-text',
-                    { opacity: 0, zIndex: -1 },
-                    {
-                        opacity: 1,
-                        zIndex: 1,
-                        duration: 0.3,
-                        ease: 'power2.inOut',
-                        onComplete: () => {
-                            // 애니메이션 완료 후 AOS 재설정
-                            if (window.AOS) {
-                                setTimeout(() => {
-                                    AOS.refreshHard();
-                                }, 200);
-                            }
-                        },
-                    },
-                    '-=0.2',
-                );
-        },
-        '(max-width: 768px)': function () {
-            // Swiper 인스턴스 생성 (모바일 메뉴용)
-            var pdsSwiper = null;
-            var section = document.querySelector('.parallax-depth-section .component-content');
-            if (!section || !window.Swiper) return;
-
-            var cubeItems = document.querySelectorAll('.cube-wrapper .cube-item');
-            var cubeImgs = Array.from(cubeItems)
-                .map(function (item) {
-                    return item.querySelector('img');
-                })
-                .reverse();
-
-            // Swiper 생성
-            pdsSwiper = new Swiper('.mobile-pds-menu .swiper-container', {
-                slidesPerView: 'auto',
-                spaceBetween: 16,
-                speed: 500,
-                effect: 'slide',
-                on: {
-                    slideChange: function () {
-                        updateCubeActiveImage(this.activeIndex);
-                    },
-                },
-            });
-
-            // cube-item 이미지 active 처리 함수
-            function updateCubeActiveImage(activeIdx) {
-                cubeImgs.forEach(function (img, idx) {
-                    if (imagePaths[idx]) {
-                        img.src = idx === activeIdx ? imagePaths[idx].active : imagePaths[idx].src;
-                    }
-                });
-            }
-
-            // parallax-depth-section 진입 시 첫번째 활성화
-            var st = ScrollTrigger.create({
-                trigger: section,
-                start: 'top center',
-                end: 'bottom center',
-                onEnter: function () {
-                    if (pdsSwiper) {
-                        pdsSwiper.slideTo(0, 0);
-                        updateCubeActiveImage(0);
-                    }
-                },
-                onEnterBack: function () {
-                    if (pdsSwiper) {
-                        pdsSwiper.slideTo(0, 0);
-                        updateCubeActiveImage(0);
-                    }
-                },
-                onLeave: function () {
-                    // 섹션 이탈 시 모든 cube-item 이미지를 기본으로
-                    cubeImgs.forEach(function (img, idx) {
-                        if (imagePaths[idx]) img.src = imagePaths[idx].src;
-                    });
-                },
-                onLeaveBack: function () {
-                    cubeImgs.forEach(function (img, idx) {
-                        if (imagePaths[idx]) img.src = imagePaths[idx].src;
-                    });
-                },
-            });
+    // 공통 애니메이션 설정
+    let tlComplete = false;
+    const tl = gsap.timeline({
+        ease: 'cubic-bezier(0.33, 1, 0.68, 1)',
+        scrollTrigger: {
+            trigger: section,
+            start: 'top center',
+            end: 'bottom center',
+            id: 'start-tl',
         },
     });
 
-    // 리사이즈 시 WheelNavigation만 재생성
+    // 큐브 아이템 애니메이션
+    tl.fromTo(
+        '.cube-item',
+        { opacity: 0, yPercent: -10 },
+        {
+            opacity: 1,
+            yPercent: 0,
+            duration: 0.4,
+            stagger: 0.2,
+            onStart: () => {
+                gsap.set('.cube-wrapper', { xPercent: 0 });
+            },
+        },
+    )
+        .fromTo('.cube-wrapper', { xPercent: 0 }, { xPercent: 34, duration: 0.3 })
+        .fromTo(
+            '.list-wrap ul',
+            { opacity: 0, xPercent: 52, yPercent: -12 },
+            {
+                opacity: 1,
+                xPercent: 0,
+                yPercent: 0,
+                duration: 0.3,
+                onComplete: () => {
+                    tlComplete = true;
+                },
+            },
+            '<',
+        )
+        .fromTo(
+            '.list-wrap ul li:first-child',
+            { opacity: 0 },
+            {
+                opacity: 1,
+                duration: 0.3,
+                onStart: () => {
+                    const img = document.querySelector(
+                        '.cube-wrapper .cube-item.cube-item-6 img',
+                    );
+                    if (img) {
+                        img.src = imagePaths[0].active;
+                    }
+                },
+            },
+            '<',
+        );
+
+    // 메인 핀 애니메이션
+    ScrollTrigger.create({
+        trigger: '.component-content',
+        start: 'top top',
+        end: '+=8000',
+        pin: true,
+        pinSpacing: true,
+        id: 'depth-pin',
+        onEnter: () => {
+            disableScroll();
+            const checkComplete = () => {
+                if (tlComplete) {
+                    if (wheelNavInstance) {
+                        wheelNavInstance.destroy();
+                        wheelNavInstance = null;
+                    }
+                    wheelNavInstance = new WheelNavigation(0);
+                } else {
+                    requestAnimationFrame(checkComplete);
+                }
+            };
+            requestAnimationFrame(checkComplete);
+        },
+        onLeave: () => {
+            enableScroll();
+            setTimeout(() => {
+                if (wheelNavInstance) {
+                    wheelNavInstance.destroy();
+                    wheelNavInstance = null;
+                }
+            }, 400);
+            tl.progress(1);
+
+            const imgs = document.querySelectorAll('.cube-wrapper .cube-item img');
+            const listItems = document.querySelectorAll('.list-wrap ul li');
+            if (imgs && listItems) {
+                setTimeout(() => {
+                    imgs.forEach((img) => {
+                        if (img.src.includes('k-model')) {
+                            img.src = imagePaths[0].src;
+                        } else if (img.src.includes('k-rag')) {
+                            img.src = imagePaths[1].src;
+                        } else if (img.src.includes('k-agent')) {
+                            img.src = imagePaths[2].src;
+                        } else if (img.src.includes('k-studio')) {
+                            img.src = imagePaths[3].src;
+                        } else if (img.src.includes('k-rai')) {
+                            img.src = imagePaths[4].src;
+                        } else if (img.src.includes('k-infra')) {
+                            img.src = imagePaths[5].src;
+                        }
+                    });
+
+                    listItems.forEach((item) => {
+                        if (item.classList.contains('active')) {
+                            item.classList.remove('active');
+                        }
+                        gsap.set(item, { opacity: 0 });
+                    });
+                }, 400);
+            }
+        },
+        onEnterBack: () => {
+            disableScroll();
+            const lastIndex =
+                document.querySelectorAll('.parallax-depth-section .list-wrap ul li')
+                    .length - 1;
+            if (wheelNavInstance) {
+                wheelNavInstance.destroy();
+                wheelNavInstance = null;
+            }
+            wheelNavInstance = new WheelNavigation(lastIndex);
+        },
+        onLeaveBack: () => {
+            enableScroll();
+            if (wheelNavInstance) {
+                wheelNavInstance.destroy();
+                wheelNavInstance = null;
+            }
+            const imgs = document.querySelectorAll('.cube-wrapper .cube-item img');
+            const listItems = document.querySelectorAll('.list-wrap ul li');
+            if (imgs && listItems) {
+                imgs.forEach((img) => {
+                    if (img.src.includes('k-model')) {
+                        img.src = imagePaths[0].active;
+                    } else if (img.src.includes('k-rag')) {
+                        img.src = imagePaths[1].src;
+                    } else if (img.src.includes('k-agent')) {
+                        img.src = imagePaths[2].src;
+                    } else if (img.src.includes('k-studio')) {
+                        img.src = imagePaths[3].src;
+                    } else if (img.src.includes('k-rai')) {
+                        img.src = imagePaths[4].src;
+                    } else if (img.src.includes('k-infra')) {
+                        img.src = imagePaths[5].src;
+                    }
+                });
+
+                listItems.forEach((item) => {
+                    if (item.classList.contains('active')) {
+                        item.classList.remove('active');
+                    }
+                    listItems[0].classList.add('active');
+
+                    gsap.set(item, { opacity: 0 });
+                    gsap.set(listItems[0], {
+                        opacity: 1,
+                    });
+                });
+            }
+        },
+    });
+
+    // 두 번째 타임라인 (큐브 축소 및 텍스트 표시)
+    const tl2 = gsap.timeline({
+        scrollTrigger: {
+            trigger: '.component-content',
+            start: '+=1',
+            end: '+=1300',
+            id: 'depth-pin2',
+            pin: true,
+            pinSpacing: true,
+            scrub: 1,
+            onLeave: () => {
+                if (wheelNavInstance) {
+                    wheelNavInstance.destroy();
+                    wheelNavInstance = null;
+                }
+            },
+        },
+    });
+
+    tl2.fromTo('.list-wrap ul', { opacity: 1 }, { opacity: 0, duration: 0.5 })
+        .fromTo(
+            '.cube-wrapper',
+            { xPercent: 34 },
+            {
+                xPercent: 0,
+                duration: 0.5,
+                ease: 'power2.inOut',
+            },
+            '<',
+        )
+        .fromTo('.component-content', { scale: 1 }, { scale: 0.8, ease: 'power2.inOut' })
+        .fromTo(
+            '.cube-last-text',
+            { opacity: 0, zIndex: -1 },
+            {
+                opacity: 1,
+                zIndex: 1,
+                duration: 0.3,
+                ease: 'power2.inOut',
+                onComplete: () => {
+                    // 애니메이션 완료 후 AOS 재설정
+                    if (window.AOS) {
+                        setTimeout(() => {
+                            AOS.refreshHard();
+                        }, 200);
+                    }
+                },
+            },
+            '-=0.2',
+        );
+
+    // 모바일 Swiper 초기화 (Swiper가 있는 경우에만)
+    if (window.Swiper) {
+        const pdsSwiper = new Swiper('.mobile-pds-menu .swiper-container', {
+            slidesPerView: 'auto',
+            spaceBetween: 16,
+            speed: 500,
+            effect: 'slide',
+            on: {
+                slideChange: function () {
+                    const cubeImgs = Array.from(document.querySelectorAll('.cube-wrapper .cube-item'))
+                        .map(item => item.querySelector('img'))
+                        .reverse();
+                    
+                    cubeImgs.forEach((img, idx) => {
+                        if (imagePaths[idx]) {
+                            img.src = idx === this.activeIndex ? imagePaths[idx].active : imagePaths[idx].src;
+                        }
+                    });
+                },
+            },
+        });
+
+        // 모바일 섹션 진입 시 첫번째 활성화
+        ScrollTrigger.create({
+            trigger: section,
+            start: 'top center',
+            end: 'bottom center',
+            onEnter: function () {
+                if (pdsSwiper) {
+                    pdsSwiper.slideTo(0, 0);
+                    const cubeImgs = Array.from(document.querySelectorAll('.cube-wrapper .cube-item'))
+                        .map(item => item.querySelector('img'))
+                        .reverse();
+                    
+                    cubeImgs.forEach((img, idx) => {
+                        if (imagePaths[idx]) {
+                            img.src = idx === 0 ? imagePaths[idx].active : imagePaths[idx].src;
+                        }
+                    });
+                }
+            },
+            onEnterBack: function () {
+                if (pdsSwiper) {
+                    pdsSwiper.slideTo(0, 0);
+                    const cubeImgs = Array.from(document.querySelectorAll('.cube-wrapper .cube-item'))
+                        .map(item => item.querySelector('img'))
+                        .reverse();
+                    
+                    cubeImgs.forEach((img, idx) => {
+                        if (imagePaths[idx]) {
+                            img.src = idx === 0 ? imagePaths[idx].active : imagePaths[idx].src;
+                        }
+                    });
+                }
+            },
+            onLeave: function () {
+                const cubeImgs = Array.from(document.querySelectorAll('.cube-wrapper .cube-item'))
+                    .map(item => item.querySelector('img'))
+                    .reverse();
+                
+                cubeImgs.forEach((img, idx) => {
+                    if (imagePaths[idx]) img.src = imagePaths[idx].src;
+                });
+            },
+            onLeaveBack: function () {
+                const cubeImgs = Array.from(document.querySelectorAll('.cube-wrapper .cube-item'))
+                    .map(item => item.querySelector('img'))
+                    .reverse();
+                
+                cubeImgs.forEach((img, idx) => {
+                    if (imagePaths[idx]) img.src = imagePaths[idx].src;
+                });
+            },
+        });
+    }
+
+    // 리사이즈 시 ScrollTrigger 새로고침
     window.addEventListener('resize', () => {
         ScrollTrigger.refresh();
-        // if (wheelNavInstance) {
-        //     console.log(wheelNavInstance);
-        //     wheelNavInstance.destroy();
-        //     wheelNavInstance = null;
-        // }
     });
 
     // cleanup function
